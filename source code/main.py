@@ -140,45 +140,26 @@ if not os.path.exists(SAVES_DIR):
 PLACEHOLDER = "Type player name or select..."
 
 class CustomWarning(ctk.CTkToplevel):
-    def __init__(self, master, title, message, button_text="DISMISS THREAT"):
+    def __init__(self, master, title, message, button_text="OK"):
         super().__init__(master)
-        self.title("CRITICAL SYSTEM ALERT")
-        self.geometry("600x450")
         self.overrideredirect(True)
         self.attributes("-topmost", True)
         self.wm_attributes("-transparentcolor", "#000001")
         self.configure(fg_color="#000001")
         
         master.update_idletasks()
-        x = master.winfo_x() + (master.winfo_width() // 2) - 300
-        y = master.winfo_y() + (master.winfo_height() // 2) - 225
-        self.geometry(f"600x450+{x}+{y}")
+        x = master.winfo_x() + (master.winfo_width() // 2) - 150
+        y = master.winfo_y() + (master.winfo_height() // 2) - 100
+        self.geometry(f"300x200+{x}+{y}")
 
-        self.main_frame = ctk.CTkFrame(self, fg_color="#050505", border_width=4, border_color="#ff0000", corner_radius=0)
+        self.main_frame = ctk.CTkFrame(self, fg_color="#121212", border_width=2, border_color="#e74c3c", corner_radius=20)
         self.main_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
-        self.header_bar = ctk.CTkFrame(self.main_frame, fg_color="#ff0000", height=40, corner_radius=0)
-        self.header_bar.pack(side="top", fill="x")
-        ctk.CTkLabel(self.header_bar, text=f"☢ {title.upper()} ☢", font=ctk.CTkFont(size=16, weight="bold"), text_color="black").pack(pady=5)
+        self.msg_label = ctk.CTkLabel(self.main_frame, text=message, font=ctk.CTkFont(size=16, weight="bold"), text_color="white", wraplength=250)
+        self.msg_label.pack(expand=True, pady=(20, 10))
 
-        self.icon_label = ctk.CTkLabel(self.main_frame, text="⚠", font=ctk.CTkFont(size=120, weight="bold"), text_color="#f1c40f")
-        self.icon_label.pack(pady=(30, 10))
-
-        self.msg_label = ctk.CTkLabel(self.main_frame, text=message.upper(), font=ctk.CTkFont(family="Consolas", size=28, weight="bold"), text_color="#ff0000", wraplength=500)
-        self.msg_label.pack(pady=20)
-
-        self.close_btn = ctk.CTkButton(self.main_frame, text=button_text.upper(), font=ctk.CTkFont(size=20, weight="bold"),
-                                       fg_color="#ff0000", text_color="black", hover_color="#aa0000", corner_radius=0, height=60, width=300,
-                                       command=self.destroy)
-        self.close_btn.pack(pady=(30, 40))
-        self.after(50, self.shake)
-
-    def shake(self):
-        try:
-            x, y = self.winfo_x(), self.winfo_y()
-            self.geometry(f"+{x+random.randint(-2,2)}+{y+random.randint(-2,2)}")
-            self.after(100, self.shake)
-        except: pass
+        self.btn = ctk.CTkButton(self.main_frame, text=button_text, width=100, height=35, corner_radius=10, fg_color="#e74c3c", hover_color="#c0392b", command=self.destroy)
+        self.btn.pack(pady=(0, 20))
 
 class CustomInfo(ctk.CTkToplevel):
     def __init__(self, master, message, color="#3498db"):
@@ -413,7 +394,7 @@ class TeamGeneratorApp(ctk.CTk):
         if os.path.exists(icon_png_path):
             try:
                 from PIL import Image
-                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(35, 35))
+                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(20, 20))
                 self.logo_label = ctk.CTkLabel(self.top_section, image=self.logo_img, text="")
                 self.logo_label.pack(side="left", padx=(0, 10))
             except Exception as e:
