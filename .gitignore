@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.env
+
+# Build
+build/
+dist/
+*.spec
+TeamGenerator.exe
+
+# User data
+config.json
+player_database.json
+NMK.json
+saves/
+crash_log.txt
+
+# OS
+.DS_Store
+Thumbs.db
