@@ -16,11 +16,12 @@ import tempfile
 import threading
 from urllib.parse import urljoin, urlparse
 
-# Windows Taskbar Icon Fix
+# Windows Taskbar Icon Fix - Set ONCE globally
 if sys.platform == "win32":
     try:
         import ctypes
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("TUF.TeamGenerator.1.1.0")
+        # Use a fresh, unique ID to force Windows to clear its cached icon for this process
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("theunrealforge.teamgenerator.final.v1.1")
     except: pass
 
 # Set appearances
@@ -217,13 +218,11 @@ class PlayerDropdown(ctk.CTkToplevel):
         self.bind("<FocusOut>", self.on_focus_out)
 
     def on_focus_out(self, event):
-        # Delay check to see where focus went
         self.after(200, self.check_destroy)
 
     def check_destroy(self):
         try:
             focus = self.focus_get()
-            # If focus is not in the dropdown and not in the entry that opened it, close
             if not focus or (focus != self and not str(focus).startswith(str(self))):
                 if focus != self.master_app.player_entries[self.slot_idx]:
                     self.destroy()
@@ -281,25 +280,24 @@ class TeamGeneratorApp(ctk.CTk):
         if os.path.exists(ICON_PATH):
             try:
                 import ctypes
-                # New unique ID to force Windows to completely refresh the icon cache
-                myappid = "TUF.TeamGenerator.Ultimate.V2"
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-                
                 self.iconbitmap(ICON_PATH)
                 
+                # FORCE high-res icon handles onto the window
                 def force_icon():
                     try:
-                        # Find the actual Windows handle for the top-level window
+                        # Get the Win32 window handle
                         hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
                         if not hwnd: hwnd = self.winfo_id()
                         
-                        # Load high-res icon handles (256 is the high-res source)
+                        # Load high-res icon handles (256 is the max source)
                         hicon_big = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 256, 256, 0x00000010)
+                        hicon_small = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 32, 32, 0x00000010)
                         
                         if hicon_big:
                             # WM_SETICON = 0x80
                             ctypes.windll.user32.SendMessageW(hwnd, 0x80, 1, hicon_big) # ICON_BIG
-                            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 0, hicon_big) # Force SMALL to also use BIG source
+                        if hicon_small:
+                            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 0, hicon_small) # ICON_SMALL
                     except: pass
                 self.after(500, force_icon)
             except: pass
@@ -431,7 +429,6 @@ class TeamGeneratorApp(ctk.CTk):
 
         ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=17, weight="bold"), text_color="#ffffff").pack(side="left")
 
-
         ctk.CTkButton(self.top_section, text="✕", width=40, height=40, corner_radius=10, fg_color="#1a1a1a", text_color="gray", hover_color="#e74c3c", command=self.quit).pack(side="right")
         
         self.nav_frame = ctk.CTkFrame(self.bg_frame, fg_color="transparent")
@@ -502,35 +499,24 @@ class TeamGeneratorApp(ctk.CTk):
     def on_type_search(self, idx):
         if self.is_updating: return
         val = self.player_vars[idx].get().strip()
-        
-        # Case-insensitive match for auto-fill recognition
         db_match = self.find_player_db_key(val)
-        
         if db_match:
             self.player_entries[idx].configure(text_color="#2ecc71")
             self.points_vars[idx].set(self.player_db[db_match])
         else:
             self.player_entries[idx].configure(text_color="white")
-        
         if val == PLACEHOLDER or val == "": 
             if self.dropdown_window and self.dropdown_window.winfo_exists() and self.dropdown_window.slot_idx == idx:
                 self.close_dropdown()
             return
-            
-        # Show suggestions while typing (WITHOUT focus theft)
         self.sync_dropdown(idx, val, take_focus=False)
 
     def handle_entry_click(self, event, idx):
         width = self.player_entries[idx].winfo_width()
-        # "half right from middle" and "left from middle" 
-        # Logic: Click anywhere except the very center 10% opens dropdown
         is_center = (width * 0.45 < event.x < width * 0.55)
-        
         if self.player_vars[idx].get() == PLACEHOLDER: 
             self.player_vars[idx].set("")
             self.player_entries[idx].configure(text_color="white")
-        
-        # If click is on the sides, open dropdown suggestions
         if not is_center:
             current_val = self.player_vars[idx].get().strip()
             self.sync_dropdown(idx, "" if current_val == PLACEHOLDER else current_val, take_focus=False)
@@ -544,12 +530,10 @@ class TeamGeneratorApp(ctk.CTk):
             self.sync_dropdown(idx, "" if current_val == PLACEHOLDER else current_val, take_focus=take_focus)
 
     def on_player_chosen(self, name, idx):
-        # Prevent duplicates
         for i, var in enumerate(self.player_vars):
             if i != idx and var.get().strip().casefold() == name.casefold():
-                CustomWarning(self, "SYSTEM ERROR", f"{name} is already chosen!", "DISMISS THREAT")
+                CustomWarning(self, "SYSTEM ERROR", f"{name} is already chosen!", "OK")
                 return
-        
         self.is_updating = True
         self.player_vars[idx].set(name)
         self.player_entries[idx].configure(text_color="#2ecc71")
@@ -568,7 +552,6 @@ class TeamGeneratorApp(ctk.CTk):
         if name and name != PLACEHOLDER and db_match:
             self.player_db[db_match] = val
             self.save_player_db()
-
 
     def create_database_ui(self):
         frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
@@ -592,7 +575,7 @@ class TeamGeneratorApp(ctk.CTk):
                 self.refresh_db_list()
                 CustomInfo(self, "Database Loaded Successfully", "#2ecc71")
             else:
-                CustomWarning(self, "LOAD FAILED", "That database file could not be read.", "DISMISS THREAT")
+                CustomWarning(self, "LOAD FAILED", "That database file could not be read.", "OK")
 
     def save_db_as(self):
         path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON", "*.json")])
@@ -631,199 +614,98 @@ class TeamGeneratorApp(ctk.CTk):
     def create_settings_ui(self):
         frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
         self.frames["settings"] = frame
-        
-        # Header Section
-        header_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        header_frame.pack(fill="x", pady=(20, 30))
+        header_frame = ctk.CTkFrame(frame, fg_color="transparent"); header_frame.pack(fill="x", pady=(20, 30))
         ctk.CTkLabel(header_frame, text="APPLICATION SETTINGS", font=ctk.CTkFont(size=22, weight="bold"), text_color="#ffffff").pack(side="left")
         ctk.CTkLabel(header_frame, text=f"Build v{APP_VERSION}", font=ctk.CTkFont(size=12), text_color="#555555").pack(side="right", pady=(10, 0))
-
-        # Discord Integration Card
-        discord_card = ctk.CTkFrame(frame, fg_color="#121212", corner_radius=20, border_width=1, border_color="#1f1f1f")
-        discord_card.pack(fill="x", pady=10, padx=2)
-        
-        inner_discord = ctk.CTkFrame(discord_card, fg_color="transparent")
-        inner_discord.pack(fill="x", padx=30, pady=25)
-        
+        discord_card = ctk.CTkFrame(frame, fg_color="#121212", corner_radius=20, border_width=1, border_color="#1f1f1f"); discord_card.pack(fill="x", pady=10, padx=2)
+        inner_discord = ctk.CTkFrame(discord_card, fg_color="transparent"); inner_discord.pack(fill="x", padx=30, pady=25)
         ctk.CTkLabel(inner_discord, text="DISCORD INTEGRATION", font=ctk.CTkFont(size=14, weight="bold"), text_color="#5865F2").pack(anchor="w", pady=(0, 5))
         ctk.CTkLabel(inner_discord, text="Enter your server webhook URL to share team results automatically.", font=ctk.CTkFont(size=12), text_color="#888888").pack(anchor="w", pady=(0, 15))
-        
-        self.hook_input = ctk.CTkEntry(inner_discord, width=700, height=45, placeholder_text="https://discord.com/api/webhooks/...", fg_color="#0a0a0a", border_color="#2a2a2a", corner_radius=10)
-        self.hook_input.pack(fill="x")
-        if self.webhook_url:
-            self.hook_input.insert(0, self.webhook_url)
-
-        # Updates Card
-        updates_card = ctk.CTkFrame(frame, fg_color="#121212", corner_radius=20, border_width=1, border_color="#1f1f1f")
-        updates_card.pack(fill="x", pady=10, padx=2)
-        
-        inner_updates = ctk.CTkFrame(updates_card, fg_color="transparent")
-        inner_updates.pack(fill="x", padx=30, pady=25)
-        
+        self.hook_input = ctk.CTkEntry(inner_discord, width=700, height=45, placeholder_text="https://discord.com/api/webhooks/...", fg_color="#0a0a0a", border_color="#2a2a2a", corner_radius=10); self.hook_input.pack(fill="x")
+        if self.webhook_url: self.hook_input.insert(0, self.webhook_url)
+        updates_card = ctk.CTkFrame(frame, fg_color="#121212", corner_radius=20, border_width=1, border_color="#1f1f1f"); updates_card.pack(fill="x", pady=10, padx=2)
+        inner_updates = ctk.CTkFrame(updates_card, fg_color="transparent"); inner_updates.pack(fill="x", padx=30, pady=25)
         ctk.CTkLabel(inner_updates, text="SOFTWARE UPDATES", font=ctk.CTkFont(size=14, weight="bold"), text_color="#2ecc71").pack(anchor="w", pady=(0, 5))
-        
-        check_row = ctk.CTkFrame(inner_updates, fg_color="transparent")
-        check_row.pack(fill="x", pady=(10, 0))
-        
+        check_row = ctk.CTkFrame(inner_updates, fg_color="transparent"); check_row.pack(fill="x", pady=(10, 0))
         self.auto_update_var = ctk.StringVar(value="on" if self.auto_check_updates else "off")
         ctk.CTkCheckBox(check_row, text="Enable automatic version checks on startup", variable=self.auto_update_var, onvalue="on", offvalue="off", font=ctk.CTkFont(size=13), border_color="#2ecc71", hover_color="#2ecc71").pack(side="left")
-        
-        self.update_status_lbl = ctk.CTkLabel(inner_updates, textvariable=self.update_status_var, font=ctk.CTkFont(size=12, weight="bold"), text_color="#f1c40f")
-        self.update_status_lbl.pack(anchor="w", pady=(15, 0))
-
-        # Bottom Action Bar
-        action_bar = ctk.CTkFrame(frame, fg_color="transparent")
-        action_bar.pack(fill="x", pady=(40, 0))
-        
-        # Center the buttons
-        inner_actions = ctk.CTkFrame(action_bar, fg_color="transparent")
-        inner_actions.pack(expand=True)
-        
+        self.update_status_lbl = ctk.CTkLabel(inner_updates, textvariable=self.update_status_var, font=ctk.CTkFont(size=12, weight="bold"), text_color="#f1c40f"); self.update_status_lbl.pack(anchor="w", pady=(15, 0))
+        action_bar = ctk.CTkFrame(frame, fg_color="transparent"); action_bar.pack(fill="x", pady=(40, 0))
+        inner_actions = ctk.CTkFrame(action_bar, fg_color="transparent"); inner_actions.pack(expand=True)
         ctk.CTkButton(inner_actions, text="SAVE CHANGES", width=200, height=50, corner_radius=15, fg_color="#1f538d", font=ctk.CTkFont(size=14, weight="bold"), command=self.save_settings).pack(side="left", padx=10)
         ctk.CTkButton(inner_actions, text="CHECK FOR UPDATES", width=200, height=50, corner_radius=15, fg_color="#2a2a2a", font=ctk.CTkFont(size=14, weight="bold"), command=lambda: self.check_for_updates(silent=False)).pack(side="left", padx=10)
 
     def save_settings(self):
-        self.webhook_url = self.hook_input.get().strip()
-        self.auto_check_updates = self.auto_update_var.get() == "on"
-
+        self.webhook_url = self.hook_input.get().strip(); self.auto_check_updates = self.auto_update_var.get() == "on"
         try:
-            write_json(
-                CONFIG_PATH,
-                {
-                    "webhook_url": self.webhook_url,
-                    "update_manifest_url": self.update_manifest_url,
-                    "auto_check_updates": self.auto_check_updates,
-                },
-            )
-            self.update_status_var.set(f"Version {APP_VERSION}")
-            CustomInfo(self, "Settings Saved Successfully", "#3498db")
-        except Exception:
-            CustomWarning(self, "SAVE FAILED", "Could not save config.json.", "DISMISS THREAT")
+            write_json(CONFIG_PATH, {"webhook_url": self.webhook_url, "update_manifest_url": self.update_manifest_url, "auto_check_updates": self.auto_check_updates})
+            self.update_status_var.set(f"Version {APP_VERSION}"); CustomInfo(self, "Settings Saved Successfully", "#3498db")
+        except Exception: CustomWarning(self, "SAVE FAILED", "Could not save config.json.", "OK")
 
     def schedule_auto_update_check(self):
-        if self.auto_check_updates and self.get_manifest_source():
-            self.check_for_updates(silent=True)
-
-    def get_manifest_source(self):
-        return self.update_manifest_url
-
-    def set_update_status(self, message):
-        self.update_status_var.set(message)
-
+        if self.auto_check_updates and self.get_manifest_source(): self.check_for_updates(silent=True)
+    def get_manifest_source(self): return self.update_manifest_url
+    def set_update_status(self, message): self.update_status_var.set(message)
     def check_for_updates(self, silent=False):
-        if self.is_checking_updates or self.is_installing_update:
-            return
-
+        if self.is_checking_updates or self.is_installing_update: return
         manifest_source = self.get_manifest_source()
         if not manifest_source:
             self.set_update_status(f"Version {APP_VERSION}")
-            if not silent:
-                CustomWarning(self, "UPDATE CONFIG", "Add an update manifest URL first.", "DISMISS THREAT")
+            if not silent: CustomWarning(self, "UPDATE CONFIG", "Add an update manifest URL first.", "OK")
             return
-
-        self.is_checking_updates = True
-        self.set_update_status("Checking for updates...")
-        threading.Thread(
-            target=self._check_for_updates_worker,
-            args=(manifest_source, silent),
-            daemon=True,
-        ).start()
+        self.is_checking_updates = True; self.set_update_status("Checking for updates...")
+        threading.Thread(target=self._check_for_updates_worker, args=(manifest_source, silent), daemon=True).start()
 
     def _check_for_updates_worker(self, manifest_source, silent):
         try:
-            manifest = self.load_update_manifest(manifest_source)
-            latest_version = manifest["version"]
+            manifest = self.load_update_manifest(manifest_source); latest_version = manifest["version"]
             if not is_newer_version(latest_version, APP_VERSION):
                 self.after(0, lambda: self.finish_update_check(f"Already up to date ({APP_VERSION}).", silent, is_error=False))
                 return
             self.after(0, lambda: self.handle_available_update(manifest, silent))
-        except Exception as exc:
-            self.after(0, lambda: self.finish_update_check(f"Update check failed: {exc}", silent, is_error=True))
+        except Exception as exc: self.after(0, lambda: self.finish_update_check(f"Update check failed: {exc}", silent, is_error=True))
 
     def finish_update_check(self, message, silent, is_error=False):
-        self.is_checking_updates = False
-        self.set_update_status(message)
-        if silent:
-            return
-        if is_error:
-            CustomWarning(self, "UPDATE ERROR", message, "DISMISS THREAT")
-        else:
-            CustomInfo(self, message, "#2ecc71")
+        self.is_checking_updates = False; self.set_update_status(message)
+        if silent: return
+        if is_error: CustomWarning(self, "UPDATE ERROR", message, "OK")
+        else: CustomInfo(self, message, "#2ecc71")
 
     def load_update_manifest(self, manifest_source):
         source = manifest_source.strip()
         if is_remote_url(source):
-            response = requests.get(source, timeout=REQUEST_TIMEOUT)
-            response.raise_for_status()
-            data = response.json()
+            response = requests.get(source, timeout=REQUEST_TIMEOUT); response.raise_for_status(); data = response.json()
         else:
             manifest_path = source
-            if not os.path.isabs(manifest_path):
-                manifest_path = os.path.join(BASE_DIR, manifest_path)
-            data = read_json(manifest_path)
-            source = manifest_path
-
-        if not isinstance(data, dict):
-            raise ValueError("Update manifest must be a JSON object.")
-
-        version = str(data.get("version", "")).strip()
-        download_url = str(data.get("url", "")).strip()
+            if not os.path.isabs(manifest_path): manifest_path = os.path.join(BASE_DIR, manifest_path)
+            data = read_json(manifest_path); source = manifest_path
+        if not isinstance(data, dict): raise ValueError("Update manifest must be a JSON object.")
+        version, download_url = str(data.get("version", "")).strip(), str(data.get("url", "")).strip()
         notes = str(data.get("notes", "")).strip()
-        if not version or not download_url:
-            raise ValueError("Update manifest must include version and url.")
-
-        return {
-            "version": version,
-            "url": download_url,
-            "notes": notes,
-            "source": source,
-        }
+        if not version or not download_url: raise ValueError("Update manifest must include version and url.")
+        return {"version": version, "url": download_url, "notes": notes, "source": source}
 
     def resolve_update_asset_source(self, manifest):
-        asset_source = manifest["url"]
-        manifest_source = manifest["source"]
-        if is_remote_url(asset_source) or os.path.isabs(asset_source):
-            return asset_source
-        if is_remote_url(manifest_source):
-            return urljoin(manifest_source, asset_source)
+        asset_source, manifest_source = manifest["url"], manifest["source"]
+        if is_remote_url(asset_source) or os.path.isabs(asset_source): return asset_source
+        if is_remote_url(manifest_source): return urljoin(manifest_source, asset_source)
         return os.path.join(os.path.dirname(manifest_source), asset_source)
 
     def handle_available_update(self, manifest, silent):
-        self.is_checking_updates = False
-        version = manifest["version"]
-        notes = manifest.get("notes", "")
-
+        self.is_checking_updates = False; version, notes = manifest["version"], manifest.get("notes", "")
         if not getattr(sys, "frozen", False):
-            message = (
-                f"Update {version} is available.\n\n"
-                "Automatic install works from TeamGenerator.exe builds.\n"
-                "Run the packaged app to test the full updater."
-            )
             self.set_update_status(f"Update {version} is available.")
-            if not silent:
-                CustomInfo(self, message, "#2ecc71")
+            if not silent: CustomInfo(self, f"Update {version} is available.\nAutomatic install works from EXE builds.", "#2ecc71")
             return
-
         message = f"Version {version} is available."
-        if notes:
-            message = f"{message}\n\nRelease notes:\n{notes}"
-        message = f"{message}\n\nDownload and install now?"
-
+        if notes: message = f"{message}\n\nRelease notes:\n{notes}"
         self.set_update_status(f"Update {version} is available.")
-        if messagebox.askyesno("Update Available", message):
-            self.install_update(manifest)
+        if messagebox.askyesno("Update Available", f"{message}\n\nDownload and install now?"): self.install_update(manifest)
 
     def install_update(self, manifest):
-        if self.is_installing_update:
-            return
-
-        self.is_installing_update = True
-        self.set_update_status(f"Downloading update {manifest['version']}...")
-        threading.Thread(
-            target=self._install_update_worker,
-            args=(manifest,),
-            daemon=True,
-        ).start()
+        if self.is_installing_update: return
+        self.is_installing_update = True; self.set_update_status(f"Downloading update {manifest['version']}...")
+        threading.Thread(target=self._install_update_worker, args=(manifest,), daemon=True).start()
 
     def _install_update_worker(self, manifest):
         work_dir = tempfile.mkdtemp(prefix="teamgenerator_update_")
@@ -833,70 +715,33 @@ class TeamGeneratorApp(ctk.CTk):
             script_path = self.create_update_script(downloaded_exe, work_dir)
             self.after(0, lambda: self.launch_update_script(script_path, manifest["version"]))
         except Exception as exc:
-            shutil.rmtree(work_dir, ignore_errors=True)
-            self.after(0, lambda: self.fail_update_install(str(exc)))
+            shutil.rmtree(work_dir, ignore_errors=True); self.after(0, lambda: self.fail_update_install(str(exc)))
 
     def download_update_asset(self, asset_source, work_dir):
         if is_remote_url(asset_source):
-            parsed = urlparse(asset_source)
-            file_name = os.path.basename(parsed.path) or "TeamGenerator.exe"
-            target_path = os.path.join(work_dir, file_name)
+            parsed = urlparse(asset_source); target_path = os.path.join(work_dir, os.path.basename(parsed.path) or "TeamGenerator.exe")
             with requests.get(asset_source, stream=True, timeout=REQUEST_TIMEOUT) as response:
                 response.raise_for_status()
                 with open(target_path, "wb") as file:
                     for chunk in response.iter_content(chunk_size=1024 * 1024):
-                        if chunk:
-                            file.write(chunk)
+                        if chunk: file.write(chunk)
             return target_path
-
-        source_path = asset_source
-        if not os.path.exists(source_path):
-            raise FileNotFoundError(f"Update file not found: {source_path}")
-
-        file_name = os.path.basename(source_path) or "TeamGenerator.exe"
-        target_path = os.path.join(work_dir, file_name)
-        shutil.copy2(source_path, target_path)
-        return target_path
+        if not os.path.exists(asset_source): raise FileNotFoundError(f"Update file not found: {asset_source}")
+        target_path = os.path.join(work_dir, os.path.basename(asset_source) or "TeamGenerator.exe")
+        shutil.copy2(asset_source, target_path); return target_path
 
     def create_update_script(self, downloaded_exe, work_dir):
         script_path = os.path.join(tempfile.gettempdir(), f"teamgenerator_apply_update_{os.getpid()}.bat")
-        script = (
-            "@echo off\n"
-            "setlocal enableextensions\n"
-            f'set "SOURCE={downloaded_exe}"\n'
-            f'set "TARGET={sys.executable}"\n'
-            ":retry\n"
-            'copy /Y "%SOURCE%" "%TARGET%" >nul 2>&1\n'
-            "if errorlevel 1 (\n"
-            "  timeout /t 1 /nobreak >nul\n"
-            "  goto retry\n"
-            ")\n"
-            'start "" "%TARGET%"\n'
-            f'rmdir /S /Q "{work_dir}" >nul 2>&1\n'
-            'del "%~f0"\n'
-        )
-        with open(script_path, "w", encoding="utf-8", newline="\r\n") as file:
-            file.write(script)
+        script = ( "@echo off\nsetlocal enableextensions\nf'set \"SOURCE={downloaded_exe}\"'\nf'set \"TARGET={sys.executable}\"'\n:retry\n'copy /Y \"%SOURCE%\" \"%TARGET%\" >nul 2>&1'\nif errorlevel 1 (\n  timeout /t 1 /nobreak >nul\n  goto retry\n)\n'start \"\" \"%TARGET%\"'\nf'rmdir /S /Q \"{work_dir}\" >nul 2>&1'\n'del \"%~f0\"'\n" )
+        with open(script_path, "w", encoding="utf-8", newline="\r\n") as file: file.write(script)
         return script_path
 
     def launch_update_script(self, script_path, version):
-        try:
-            subprocess.Popen(
-                ["cmd", "/c", script_path],
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-            )
-        except Exception as exc:
-            self.fail_update_install(str(exc))
-            return
+        try: subprocess.Popen(["cmd", "/c", script_path], creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        except Exception as exc: self.fail_update_install(str(exc)); return
+        self.set_update_status(f"Installing update {version}..."); messagebox.showinfo("Installing Update", f"The app will close to install version {version}."); self.destroy()
 
-        self.set_update_status(f"Installing update {version}...")
-        messagebox.showinfo("Installing Update", f"The app will close to install version {version}.")
-        self.destroy()
-
-    def fail_update_install(self, message):
-        self.is_installing_update = False
-        self.set_update_status(f"Update install failed: {message}")
-        CustomWarning(self, "UPDATE FAILED", message, "DISMISS THREAT")
+    def fail_update_install(self, message): self.is_installing_update = False; self.set_update_status(f"Update install failed: {message}"); CustomWarning(self, "UPDATE FAILED", message, "OK")
 
     def generate_teams(self):
         try:
@@ -904,71 +749,35 @@ class TeamGeneratorApp(ctk.CTk):
             seen_names = set()
             for i in range(10):
                 name = self.player_vars[i].get().strip()
-                if not name or name == PLACEHOLDER:
-                    continue
-
-                name_key = name.casefold()
-                if name_key in seen_names:
-                    raise ValueError(f"{name} is entered more than once.")
-                seen_names.add(name_key)
-                players.append({"name": name, "points": int(self.points_vars[i].get())})
-
-            if len(players) < 2:
-                CustomWarning(self, "NOT ENOUGH PLAYERS", "Add at least two players first.", "DISMISS THREAT")
-                return
-
+                if not name or name == PLACEHOLDER: continue
+                if name.casefold() in seen_names: raise ValueError(f"{name} is entered more than once.")
+                seen_names.add(name.casefold()); players.append({"name": name, "points": int(self.points_vars[i].get())})
+            if len(players) < 2: CustomWarning(self, "NOT ENOUGH PLAYERS", "Add at least two players first.", "OK"); return
             best_diff, best_split = float('inf'), ([], [])
-            random_players = players[:]
-            random.shuffle(random_players)
+            random_players = players[:]; random.shuffle(random_players)
             for combo in itertools.combinations(random_players, len(players)//2):
                 t1, t2 = list(combo), [p for p in random_players if p not in combo]
                 diff = abs(sum(p['points'] for p in t1) - sum(p['points'] for p in t2))
-                if diff < best_diff:
-                    best_diff, best_split = diff, (t1, t2)
-                if diff == 0:
-                    break
-
-            self.t1_title.configure(text=(self.t1_name_entry.get().strip() or "TEAM 1").upper())
-            self.t2_title.configure(text=(self.t2_name_entry.get().strip() or "TEAM 2").upper())
-            self.t1_list.configure(text="\n".join([p['name'] for p in best_split[0]]))
-            self.t2_list.configure(text="\n".join([p['name'] for p in best_split[1]]))
-            self.t1_total_label.configure(text=f"Total Points: {sum(p['points'] for p in best_split[0])}")
-            self.t2_total_label.configure(text=f"Total Points: {sum(p['points'] for p in best_split[1])}")
-        except Exception as e:
-            CustomWarning(self, "SYSTEM ERROR", str(e), "DISMISS THREAT")
+                if diff < best_diff: best_diff, best_split = diff, (t1, t2)
+                if diff == 0: break
+            self.t1_title.configure(text=(self.t1_name_entry.get().strip() or "TEAM 1").upper()); self.t2_title.configure(text=(self.t2_name_entry.get().strip() or "TEAM 2").upper())
+            self.t1_list.configure(text="\n".join([p['name'] for p in best_split[0]])); self.t2_list.configure(text="\n".join([p['name'] for p in best_split[1]]))
+            self.t1_total_label.configure(text=f"Total Points: {sum(p['points'] for p in best_split[0])}"); self.t2_total_label.configure(text=f"Total Points: {sum(p['points'] for p in best_split[1])}")
+        except Exception as e: CustomWarning(self, "SYSTEM ERROR", str(e), "OK")
 
     def get_roster_path(self, roster_name):
         clean_name = roster_name.strip()
-        if not clean_name:
-            raise ValueError("Roster name cannot be empty.")
-        if not clean_name.lower().endswith(".json"):
-            clean_name = f"{clean_name}.json"
+        if not clean_name: raise ValueError("Roster name cannot be empty.")
+        if not clean_name.lower().endswith(".json"): clean_name = f"{clean_name}.json"
         return os.path.join(SAVES_DIR, os.path.basename(clean_name))
 
     def save_roster_action(self):
         name = filedialog.asksaveasfilename(initialdir=SAVES_DIR, defaultextension=".json", filetypes=[("JSON", "*.json")])
         if name:
             target = self.get_roster_path(os.path.basename(name))
-            data = {
-                "team_names": {
-                    "team_1": self.t1_name_entry.get().strip(),
-                    "team_2": self.t2_name_entry.get().strip(),
-                },
-                "players": [
-                    {
-                        "name": self.player_vars[i].get().strip() if self.player_vars[i].get().strip() != PLACEHOLDER else "",
-                        "pts": self.points_vars[i].get(),
-                    }
-                    for i in range(10)
-                ],
-            }
-            try:
-                write_json(target, data)
-                self.roster_combo.configure(values=self.get_saved_rosters())
-                self.roster_combo.set(os.path.splitext(os.path.basename(target))[0])
-                CustomInfo(self, "Roster Saved Successfully", "#2ecc71")
-            except Exception:
-                CustomWarning(self, "SAVE FAILED", "Could not save that roster.", "DISMISS THREAT")
+            data = {"team_names": {"team_1": self.t1_name_entry.get().strip(), "team_2": self.t2_name_entry.get().strip()}, "players": [{"name": self.player_vars[i].get().strip() if self.player_vars[i].get().strip() != PLACEHOLDER else "", "pts": self.points_vars[i].get()} for i in range(10)]}
+            try: write_json(target, data); self.roster_combo.configure(values=self.get_saved_rosters()); self.roster_combo.set(os.path.splitext(os.path.basename(target))[0]); CustomInfo(self, "Roster Saved Successfully", "#2ecc71")
+            except Exception: CustomWarning(self, "SAVE FAILED", "Could not save that roster.", "OK")
 
     def load_roster_action(self):
         r_name = self.roster_combo.get()
@@ -976,74 +785,30 @@ class TeamGeneratorApp(ctk.CTk):
         path = self.get_roster_path(r_name)
         if os.path.exists(path):
             self.is_updating = True
-            try:
-                loaded = read_json(path)
-            except Exception:
-                self.is_updating = False
-                CustomWarning(self, "LOAD FAILED", "That roster file is not valid JSON.", "DISMISS THREAT")
-                return
-            if isinstance(loaded, list):
-                players = loaded
-                team_names = {}
-            else:
-                players = loaded.get("players", [])
-                team_names = loaded.get("team_names", {})
-
+            try: loaded = read_json(path)
+            except Exception: self.is_updating = False; CustomWarning(self, "LOAD FAILED", "That roster file is not valid JSON.", "OK"); return
+            players = loaded if isinstance(loaded, list) else loaded.get("players", [])
+            team_names = {} if isinstance(loaded, list) else loaded.get("team_names", {})
             for i in range(10):
-                row = players[i] if i < len(players) else {}
-                n = str(row.get("name", "")).strip()
-                pts = str(row.get("pts", "5")).strip() or "5"
-                self.player_vars[i].set(n if n else PLACEHOLDER)
-                self.points_vars[i].set(pts)
-                self.player_entries[i].configure(text_color="#2ecc71" if n else "white")
-
-            self.is_updating = False
-
-            self.t1_name_entry.delete(0, 'end')
-            self.t2_name_entry.delete(0, 'end')
-            if str(team_names.get("team_1", "")).strip():
-                self.t1_name_entry.insert(0, str(team_names.get("team_1", "")).strip())
-            if str(team_names.get("team_2", "")).strip():
-                self.t2_name_entry.insert(0, str(team_names.get("team_2", "")).strip())
-            self.t1_title.configure(text=(self.t1_name_entry.get().strip() or "TEAM 1").upper())
-            self.t2_title.configure(text=(self.t2_name_entry.get().strip() or "TEAM 2").upper())
-            CustomInfo(self, "Roster Loaded Successfully", "#3498db")
+                row = players[i] if i < len(players) else {}; n = str(row.get("name", "")).strip(); pts = str(row.get("pts", "5")).strip() or "5"
+                self.player_vars[i].set(n if n else PLACEHOLDER); self.points_vars[i].set(pts); self.player_entries[i].configure(text_color="#2ecc71" if n else "white")
+            self.is_updating = False; self.t1_name_entry.delete(0, 'end'); self.t2_name_entry.delete(0, 'end')
+            if str(team_names.get("team_1", "")).strip(): self.t1_name_entry.insert(0, str(team_names.get("team_1", "")).strip())
+            if str(team_names.get("team_2", "")).strip(): self.t2_name_entry.insert(0, str(team_names.get("team_2", "")).strip())
+            self.t1_title.configure(text=(self.t1_name_entry.get().strip() or "TEAM 1").upper()); self.t2_title.configure(text=(self.t2_name_entry.get().strip() or "TEAM 2").upper()); CustomInfo(self, "Roster Loaded Successfully", "#3498db")
 
     def get_saved_rosters(self):
-        if not os.path.exists(SAVES_DIR):
-            return []
+        if not os.path.exists(SAVES_DIR): return []
         return sorted([f.replace(".json", "") for f in os.listdir(SAVES_DIR) if f.endswith(".json")], key=str.casefold)
 
     def send_to_discord(self):
-        if not self.webhook_url:
-            CustomWarning(self, "CONFIG MISSING", "No Webhook!", "DISMISS THREAT")
-            return
-        if not self.t1_list.cget("text") and not self.t2_list.cget("text"):
-            CustomWarning(self, "NO TEAMS", "Generate teams before sharing them!", "DISMISS THREAT")
-            return
+        if not self.webhook_url: CustomWarning(self, "CONFIG MISSING", "No Webhook!", "OK"); return
+        if not self.t1_list.cget("text") and not self.t2_list.cget("text"): CustomWarning(self, "NO TEAMS", "Generate teams before sharing them!", "OK"); return
         try:
-            self.update()
-            img = ImageGrab.grab(
-                bbox=(
-                    self.result_container.winfo_rootx(),
-                    self.result_container.winfo_rooty(),
-                    self.result_container.winfo_rootx() + self.result_container.winfo_width(),
-                    self.result_container.winfo_rooty() + self.result_container.winfo_height(),
-                )
-            )
-            buf = io.BytesIO()
-            img.save(buf, format="PNG")
-            buf.seek(0)
-            response = requests.post(
-                self.webhook_url,
-                files={"file": ("teams.png", buf, "image/png")},
-                data={"content": "**Balanced Teams**"},
-                timeout=REQUEST_TIMEOUT,
-            )
-            response.raise_for_status()
-            CustomInfo(self, "Teams shared to Discord!", "#5865F2")
-        except Exception as exc:
-            CustomWarning(self, "DISCORD FAILED", str(exc), "DISMISS THREAT")
+            self.update(); img = ImageGrab.grab(bbox=(self.result_container.winfo_rootx(), self.result_container.winfo_rooty(), self.result_container.winfo_rootx() + self.result_container.winfo_width(), self.result_container.winfo_rooty() + self.result_container.winfo_height()))
+            buf = io.BytesIO(); img.save(buf, format="PNG"); buf.seek(0)
+            response = requests.post(self.webhook_url, files={"file": ("teams.png", buf, "image/png")}, data={"content": "**Balanced Teams**"}, timeout=REQUEST_TIMEOUT); response.raise_for_status(); CustomInfo(self, "Teams shared to Discord!", "#5865F2")
+        except Exception as exc: CustomWarning(self, "DISCORD FAILED", str(exc), "OK")
 
 if __name__ == "__main__":
     try: app = TeamGeneratorApp(); app.mainloop()
