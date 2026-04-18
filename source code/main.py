@@ -281,24 +281,20 @@ class TeamGeneratorApp(ctk.CTk):
         if os.path.exists(ICON_PATH):
             try:
                 import ctypes
-                # Force Windows to treat this as a unique app for taskbar grouping
-                myappid = "TUF.TeamGenerator.v1"
+                # Unique ID to force Windows to refresh the taskbar icon cache
+                myappid = "TUF.TeamGenerator.FinalV1.1"
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
                 
-                # Standard Tkinter icon
                 self.iconbitmap(ICON_PATH)
                 
-                # Force high-res icon onto the window handles to fix "small" taskbar icon
                 def force_icon():
                     try:
                         hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
                         if not hwnd: hwnd = self.winfo_id()
-                        
-                        # Load icon with large size to ensure it fills taskbar (256 is max standard)
-                        hicon_big = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 256, 256, 0x00000010)
-                        
-                        if hicon_big:
-                            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 1, hicon_big) # ICON_BIG
+                        # Use 384x384 (1.5x of 256) to ensure Windows accepts and displays it at full taskbar size
+                        hicon = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 384, 384, 0x00000010)
+                        if hicon:
+                            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 1, hicon) # ICON_BIG
                     except: pass
                 self.after(500, force_icon)
             except: pass
@@ -428,7 +424,7 @@ class TeamGeneratorApp(ctk.CTk):
             except Exception as e:
                 pass
 
-        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=20, weight="bold"), text_color="#ffffff").pack(side="left")
+        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=17, weight="bold"), text_color="#ffffff").pack(side="left")
 
 
         ctk.CTkButton(self.top_section, text="✕", width=40, height=40, corner_radius=10, fg_color="#1a1a1a", text_color="gray", hover_color="#e74c3c", command=self.quit).pack(side="right")
