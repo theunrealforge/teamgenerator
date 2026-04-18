@@ -404,6 +404,20 @@ class TeamGeneratorApp(ctk.CTk):
     def setup_ui(self):
         self.top_section = ctk.CTkFrame(self.bg_frame, fg_color="transparent", height=60)
         self.top_section.pack(side="top", fill="x", padx=30, pady=(20, 0))
+        
+        # Load and display logo icon
+        icon_png_path = os.path.join(BASE_DIR, "icon.png")
+        if not os.path.exists(icon_png_path) and not getattr(sys, 'frozen', False):
+             icon_png_path = os.path.join(os.path.dirname(BASE_DIR), "source code", "icon.png")
+        
+        if os.path.exists(icon_png_path):
+            try:
+                from PIL import Image
+                logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(35, 35))
+                logo_label = ctk.CTkLabel(self.top_section, image=logo_img, text="")
+                logo_label.pack(side="left", padx=(0, 10))
+            except: pass
+
         ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=16, weight="bold"), text_color="#666666").pack(side="left")
         ctk.CTkButton(self.top_section, text="✕", width=40, height=40, corner_radius=10, fg_color="#1a1a1a", text_color="gray", hover_color="#e74c3c", command=self.quit).pack(side="right")
         self.nav_frame = ctk.CTkFrame(self.bg_frame, fg_color="transparent")
