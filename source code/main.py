@@ -20,7 +20,7 @@ from urllib.parse import urljoin, urlparse
 if sys.platform == "win32":
     try:
         import ctypes
-        myappid = "theunrealforge.teamgenerator.stable.v1.1"
+        myappid = "theunrealforge.teamgenerator.final.v1.1"
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     except: pass
 
@@ -275,25 +275,51 @@ class TeamGeneratorApp(ctk.CTk):
 
     def create_database_ui(self):
         f = ctk.CTkFrame(self.content_frame, fg_color="transparent"); self.frames["database"] = f
-        # Database Profile Row
-        ctrl = ctk.CTkFrame(f, fg_color="#121212", corner_radius=15, border_width=1, border_color="#1f1f1f"); ctrl.pack(fill="x", pady=(0, 10))
-        ctk.CTkLabel(ctrl, text="DATABASE PROFILE:", font=ctk.CTkFont(size=12, weight="bold")).pack(side="left", padx=(20, 10), pady=20)
-        self.db_selector = ctk.CTkComboBox(ctrl, values=self.get_db_list(), width=220, command=self.switch_db); self.db_selector.set(self.active_db_name); self.db_selector.pack(side="left", padx=5)
-        self.new_profile_entry = ctk.CTkEntry(ctrl, placeholder_text="New Profile Name...", width=180); self.new_profile_entry.pack(side="left", padx=5)
-        ctk.CTkButton(ctrl, text="CREATE", width=80, fg_color="#2ecc71", text_color="black", font=ctk.CTkFont(weight="bold"), command=self.new_db_action).pack(side="left", padx=5)
-        ctk.CTkButton(ctrl, text="DELETE", width=80, fg_color="#c0392b", command=self.delete_db_action).pack(side="left", padx=5)
-        # Add Player Section
-        add = ctk.CTkFrame(f, fg_color="#121212", corner_radius=15, border_width=1, border_color="#1f1f1f"); add.pack(fill="x", pady=5)
-        ctk.CTkLabel(add, text="NAME:").pack(side="left", padx=15); self.db_name_input = ctk.CTkEntry(add, width=320, height=35); self.db_name_input.pack(side="left", padx=5, pady=15)
-        ctk.CTkLabel(add, text="POINTS:").pack(side="left", padx=15); self.db_pts_input = ctk.CTkComboBox(add, values=[str(x) for x in range(1, 11)], width=90, height=35); self.db_pts_input.pack(side="left", padx=5)
-        ctk.CTkButton(add, text="ADD PLAYER", width=140, height=35, corner_radius=8, fg_color="#1f538d", command=self.db_add_player).pack(side="right", padx=15)
-        # Management Row (RESTORED FEATURES)
-        manage_row = ctk.CTkFrame(f, fg_color="transparent"); manage_row.pack(fill="x", pady=5)
-        ctk.CTkButton(manage_row, text="LOAD FROM FILE", width=160, fg_color="#2ecc71", text_color="black", font=ctk.CTkFont(weight="bold"), command=self.load_external_db).pack(side="left", padx=5)
-        ctk.CTkButton(manage_row, text="EXPORT DATABASE", width=160, fg_color="#3498db", text_color="black", font=ctk.CTkFont(weight="bold"), command=self.save_db_as).pack(side="left", padx=5)
-        ctk.CTkButton(manage_row, text="CLEAR PROFILE", width=160, fg_color="#333333", command=self.new_database).pack(side="left", padx=5)
-        ctk.CTkButton(manage_row, text="WIPE ACTIVE", width=160, fg_color="#c0392b", command=self.delete_database).pack(side="left", padx=5)
-        self.db_scroll = ctk.CTkScrollableFrame(f, fg_color="transparent"); self.db_scroll.pack(fill="both", expand=True, pady=10)
+        
+        # 1. Profile Section (The Top Unit)
+        p_frame = ctk.CTkFrame(f, fg_color="#121212", corner_radius=15, border_width=1, border_color="#1f1f1f")
+        p_frame.pack(fill="x", pady=(0, 10))
+        
+        # Left: Active Switcher
+        p_left = ctk.CTkFrame(p_frame, fg_color="transparent")
+        p_left.pack(side="left", padx=20, pady=15)
+        ctk.CTkLabel(p_left, text="ACTIVE PROFILE:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#888888").pack(anchor="w")
+        self.db_selector = ctk.CTkComboBox(p_left, values=self.get_db_list(), width=250, height=35, command=self.switch_db, fg_color="#0a0a0a")
+        self.db_selector.set(self.active_db_name); self.db_selector.pack(pady=(2, 0))
+        
+        # Right: Creation Area
+        p_right = ctk.CTkFrame(p_frame, fg_color="transparent")
+        p_right.pack(side="right", padx=20, pady=15)
+        ctk.CTkLabel(p_right, text="NEW PROFILE NAME:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#888888").pack(anchor="w")
+        self.new_profile_entry = ctk.CTkEntry(p_right, placeholder_text="Enter Name...", width=200, height=35, fg_color="#0a0a0a")
+        self.new_profile_entry.pack(side="left", padx=(0, 5), pady=(2, 0))
+        ctk.CTkButton(p_right, text="CREATE", width=90, height=35, fg_color="#2ecc71", text_color="black", font=ctk.CTkFont(weight="bold"), command=self.new_db_action).pack(side="left", pady=(2, 0))
+        ctk.CTkButton(p_right, text="DELETE", width=90, height=35, fg_color="#c0392b", command=self.delete_db_action).pack(side="left", padx=(5, 0), pady=(2, 0))
+
+        # 2. Player Entry Card
+        a_frame = ctk.CTkFrame(f, fg_color="#121212", corner_radius=15, border_width=1, border_color="#1f1f1f")
+        a_frame.pack(fill="x", pady=5)
+        
+        ctk.CTkLabel(a_frame, text="PLAYER NAME:").pack(side="left", padx=(25, 5), pady=20)
+        self.db_name_input = ctk.CTkEntry(a_frame, width=420, height=40, fg_color="#0a0a0a"); self.db_name_input.pack(side="left", padx=5)
+        ctk.CTkLabel(a_frame, text="POINTS:").pack(side="left", padx=(15, 5))
+        self.db_pts_input = ctk.CTkComboBox(a_frame, values=[str(x) for x in range(1, 11)], width=90, height=40, fg_color="#0a0a0a"); self.db_pts_input.pack(side="left", padx=5)
+        ctk.CTkButton(a_frame, text="ADD TO LIST", width=160, height=45, corner_radius=10, fg_color="#1f538d", font=ctk.CTkFont(weight="bold"), command=self.db_add_player).pack(side="right", padx=25)
+
+        # 3. Action Toolbar (Load, Export, Clear, Wipe)
+        t_frame = ctk.CTkFrame(f, fg_color="transparent")
+        t_frame.pack(fill="x", pady=10)
+        
+        ctk.CTkButton(t_frame, text="LOAD FROM FILE", width=180, height=38, fg_color="#2ecc71", text_color="black", font=ctk.CTkFont(size=12, weight="bold"), command=self.load_external_db).pack(side="left", padx=5)
+        ctk.CTkButton(t_frame, text="EXPORT DATABASE", width=180, height=38, fg_color="#3498db", text_color="black", font=ctk.CTkFont(size=12, weight="bold"), command=self.save_db_as).pack(side="left", padx=5)
+        
+        # Destructive actions on the right
+        ctk.CTkButton(t_frame, text="WIPE ACTIVE PROFILE", width=180, height=38, fg_color="#c0392b", font=ctk.CTkFont(size=12), command=self.delete_database).pack(side="right", padx=5)
+        ctk.CTkButton(t_frame, text="CLEAR CURRENT LIST", width=180, height=38, fg_color="#333333", font=ctk.CTkFont(size=12), command=self.new_database).pack(side="right", padx=5)
+        
+        # 4. Scroll List
+        self.db_scroll = ctk.CTkScrollableFrame(f, fg_color="transparent")
+        self.db_scroll.pack(fill="both", expand=True, pady=(5, 0))
 
     def get_db_list(self): return [f.replace(".json","") for f in os.listdir(DB_DIR) if f.endswith(".json")] or ["default"]
     def switch_db(self, name): self.active_db_name = name; self.save_config(); self.load_active_db(); self.refresh_db_list()
