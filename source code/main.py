@@ -607,12 +607,6 @@ class TeamGeneratorApp(ctk.CTk):
         if self.webhook_url:
             self.hook_input.insert(0, self.webhook_url)
 
-        ctk.CTkLabel(frame, text="Update Manifest URL", font=ctk.CTkFont(size=15, weight="bold"), text_color="#2ecc71").pack(pady=(0, 8))
-        self.update_url_input = ctk.CTkEntry(frame, width=700, height=40, placeholder_text="https://example.com/update_manifest.json")
-        self.update_url_input.pack(pady=(0, 12))
-        if self.update_manifest_url:
-            self.update_url_input.insert(0, self.update_manifest_url)
-
         self.auto_update_var = ctk.StringVar(value="on" if self.auto_check_updates else "off")
         ctk.CTkCheckBox(
             frame,
@@ -631,7 +625,6 @@ class TeamGeneratorApp(ctk.CTk):
 
     def save_settings(self):
         self.webhook_url = self.hook_input.get().strip()
-        self.update_manifest_url = self.update_url_input.get().strip()
         self.auto_check_updates = self.auto_update_var.get() == "on"
 
         try:
@@ -653,10 +646,6 @@ class TeamGeneratorApp(ctk.CTk):
             self.check_for_updates(silent=True)
 
     def get_manifest_source(self):
-        if hasattr(self, "update_url_input"):
-            current_value = self.update_url_input.get().strip()
-            if current_value:
-                return current_value
         return self.update_manifest_url
 
     def set_update_status(self, message):
