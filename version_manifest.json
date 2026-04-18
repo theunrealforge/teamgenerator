@@ -1,0 +1,5 @@
+{
+  "version": "1.1.0",
+  "url": "https://github.com/theunrealforge/teamgenerator/releases/latest/download/TeamGenerator.exe",
+  "notes": "Initial release with GitHub Auto-Update support and balanced team algorithm."
+}

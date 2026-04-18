@@ -25,9 +25,13 @@ APP_NAME = "TeamGenerator"
 APP_VERSION = "1.1.0"
 REQUEST_TIMEOUT = 15
 AUTO_UPDATE_DELAY_MS = 1500
+GITHUB_USER = "theunrealforge"
+GITHUB_REPO = "teamgenerator"
+DEFAULT_MANIFEST_URL = f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/main/version_manifest.json"
+
 DEFAULT_CONFIG = {
     "webhook_url": "",
-    "update_manifest_url": "",
+    "update_manifest_url": DEFAULT_MANIFEST_URL,
     "auto_check_updates": True,
 }
 
