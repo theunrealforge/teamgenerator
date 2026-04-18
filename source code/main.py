@@ -389,13 +389,13 @@ class TeamGeneratorApp(ctk.CTk):
         if os.path.exists(icon_png_path):
             try:
                 from PIL import Image
-                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(20, 20))
+                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(22, 22))
                 self.logo_label = ctk.CTkLabel(self.top_section, image=self.logo_img, text="")
                 self.logo_label.pack(side="left", padx=(0, 10))
             except Exception as e:
                 pass
 
-        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=18, weight="bold"), text_color="#ffffff").pack(side="left")
+        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=16, weight="bold"), text_color="#ffffff").pack(side="left")
         ctk.CTkButton(self.top_section, text="✕", width=40, height=40, corner_radius=10, fg_color="#1a1a1a", text_color="gray", hover_color="#e74c3c", command=self.quit).pack(side="right")
         
         self.nav_frame = ctk.CTkFrame(self.bg_frame, fg_color="transparent")
