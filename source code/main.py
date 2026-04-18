@@ -407,16 +407,17 @@ class TeamGeneratorApp(ctk.CTk):
         
         # Load and display logo icon
         icon_png_path = os.path.join(BASE_DIR, "icon.png")
-        if not os.path.exists(icon_png_path) and not getattr(sys, 'frozen', False):
-             icon_png_path = os.path.join(os.path.dirname(BASE_DIR), "source code", "icon.png")
+        if not os.path.exists(icon_png_path):
+             icon_png_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
         
         if os.path.exists(icon_png_path):
             try:
                 from PIL import Image
-                logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(35, 35))
-                logo_label = ctk.CTkLabel(self.top_section, image=logo_img, text="")
-                logo_label.pack(side="left", padx=(0, 10))
-            except: pass
+                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(35, 35))
+                self.logo_label = ctk.CTkLabel(self.top_section, image=self.logo_img, text="")
+                self.logo_label.pack(side="left", padx=(0, 10))
+            except Exception as e:
+                print(f"Icon error: {e}")
 
         ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=16, weight="bold"), text_color="#666666").pack(side="left")
         ctk.CTkButton(self.top_section, text="✕", width=40, height=40, corner_radius=10, fg_color="#1a1a1a", text_color="gray", hover_color="#e74c3c", command=self.quit).pack(side="right")
