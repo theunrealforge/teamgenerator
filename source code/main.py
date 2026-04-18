@@ -30,7 +30,7 @@ ctk.set_default_color_theme("blue")
 
 # APP CONSTANTS
 APP_NAME = "TeamGenerator"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.0.0"
 REQUEST_TIMEOUT = 15
 AUTO_UPDATE_DELAY_MS = 1500
 GITHUB_USER = "theunrealforge"
