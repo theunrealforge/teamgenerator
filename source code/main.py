@@ -16,6 +16,13 @@ import tempfile
 import threading
 from urllib.parse import urljoin, urlparse
 
+# Windows Taskbar Icon Fix
+if sys.platform == "win32":
+    try:
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("TUF.TeamGenerator.1.1.0")
+    except: pass
+
 # Set appearances
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
@@ -37,7 +44,7 @@ DEFAULT_CONFIG = {
 
 def get_base_path():
     if getattr(sys, 'frozen', False):
-        return os.path.dirname(sys.executable)
+        return getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
     return os.path.dirname(os.path.abspath(__file__))
 
 BASE_DIR = get_base_path()
