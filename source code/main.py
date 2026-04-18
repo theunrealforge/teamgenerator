@@ -381,30 +381,18 @@ class TeamGeneratorApp(ctk.CTk):
         self.top_section = ctk.CTkFrame(self.bg_frame, fg_color="transparent", height=60)
         self.top_section.pack(side="top", fill="x", padx=30, pady=(20, 0))
         
-        # Load and display logo icon
-        icon_png_path = os.path.join(BASE_DIR, "icon.png")
-        if not os.path.exists(icon_png_path):
-             icon_png_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
-        
-        if os.path.exists(icon_png_path):
-            try:
-                from PIL import Image
-                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(20, 20))
-                self.logo_label = ctk.CTkLabel(self.top_section, image=self.logo_img, text="")
-                self.logo_label.pack(side="left", padx=(0, 10))
-            except Exception as e:
-                print(f"Icon error: {e}")
-
-        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=16, weight="bold"), text_color="#666666").pack(side="left")
+        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=18, weight="bold"), text_color="#ffffff").pack(side="left")
         ctk.CTkButton(self.top_section, text="✕", width=40, height=40, corner_radius=10, fg_color="#1a1a1a", text_color="gray", hover_color="#e74c3c", command=self.quit).pack(side="right")
+        
         self.nav_frame = ctk.CTkFrame(self.bg_frame, fg_color="transparent")
-        self.nav_frame.pack(pady=10)
+        self.nav_frame.pack(pady=20)
         self.tab_buttons = {}
-        for code, label in [("generator", "Team Generator"), ("database", "Player Database"), ("settings", "Settings")]:
-            btn = ctk.CTkButton(self.nav_frame, text=label, width=180, height=40, corner_radius=12, fg_color="#1a1a1a", text_color="#aaaaaa", font=ctk.CTkFont(size=13, weight="bold"), command=lambda c=code: self.show_frame(c))
-            btn.pack(side="left", padx=12); self.tab_buttons[code] = btn
+        for code, label in [("generator", "Generator"), ("database", "Database"), ("settings", "Settings")]:
+            btn = ctk.CTkButton(self.nav_frame, text=label.upper(), width=160, height=45, corner_radius=12, fg_color="#1a1a1a", text_color="#aaaaaa", font=ctk.CTkFont(size=12, weight="bold"), command=lambda c=code: self.show_frame(c))
+            btn.pack(side="left", padx=8); self.tab_buttons[code] = btn
+        
         self.content_frame = ctk.CTkFrame(self.bg_frame, fg_color="transparent")
-        self.content_frame.pack(fill="both", expand=True, padx=30, pady=(0, 30))
+        self.content_frame.pack(fill="both", expand=True, padx=40, pady=(0, 30))
         self.frames = {}
         self.create_generator_ui(); self.create_database_ui(); self.create_settings_ui()
         self.show_frame("generator")
@@ -593,30 +581,52 @@ class TeamGeneratorApp(ctk.CTk):
     def create_settings_ui(self):
         frame = ctk.CTkFrame(self.content_frame, fg_color="transparent")
         self.frames["settings"] = frame
-        ctk.CTkLabel(frame, text="App Settings", font=ctk.CTkFont(size=20, weight="bold"), text_color="#ecf0f1").pack(pady=(30, 12))
-        ctk.CTkLabel(frame, text=f"Current version: {APP_VERSION}", font=ctk.CTkFont(size=14), text_color="#8a8a8a").pack(pady=(0, 20))
-        ctk.CTkLabel(frame, text="Discord Webhook URL", font=ctk.CTkFont(size=15, weight="bold"), text_color="#5865F2").pack(pady=(0, 8))
+        
+        # Header Section
+        header_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        header_frame.pack(fill="x", pady=(20, 30))
+        ctk.CTkLabel(header_frame, text="APPLICATION SETTINGS", font=ctk.CTkFont(size=22, weight="bold"), text_color="#ffffff").pack(side="left")
+        ctk.CTkLabel(header_frame, text=f"Build v{APP_VERSION}", font=ctk.CTkFont(size=12), text_color="#555555").pack(side="right", pady=(10, 0))
 
-        self.hook_input = ctk.CTkEntry(frame, width=700, height=40, placeholder_text="Paste Webhook URL...")
-        self.hook_input.pack(pady=(0, 20))
+        # Discord Integration Card
+        discord_card = ctk.CTkFrame(frame, fg_color="#121212", corner_radius=20, border_width=1, border_color="#1f1f1f")
+        discord_card.pack(fill="x", pady=10, padx=2)
+        
+        inner_discord = ctk.CTkFrame(discord_card, fg_color="transparent")
+        inner_discord.pack(fill="x", padx=30, pady=25)
+        
+        ctk.CTkLabel(inner_discord, text="DISCORD INTEGRATION", font=ctk.CTkFont(size=14, weight="bold"), text_color="#5865F2").pack(anchor="w", pady=(0, 5))
+        ctk.CTkLabel(inner_discord, text="Enter your server webhook URL to share team results automatically.", font=ctk.CTkFont(size=12), text_color="#888888").pack(anchor="w", pady=(0, 15))
+        
+        self.hook_input = ctk.CTkEntry(inner_discord, width=700, height=45, placeholder_text="https://discord.com/api/webhooks/...", fg_color="#0a0a0a", border_color="#2a2a2a", corner_radius=10)
+        self.hook_input.pack(fill="x")
         if self.webhook_url:
             self.hook_input.insert(0, self.webhook_url)
 
+        # Updates Card
+        updates_card = ctk.CTkFrame(frame, fg_color="#121212", corner_radius=20, border_width=1, border_color="#1f1f1f")
+        updates_card.pack(fill="x", pady=10, padx=2)
+        
+        inner_updates = ctk.CTkFrame(updates_card, fg_color="transparent")
+        inner_updates.pack(fill="x", padx=30, pady=25)
+        
+        ctk.CTkLabel(inner_updates, text="SOFTWARE UPDATES", font=ctk.CTkFont(size=14, weight="bold"), text_color="#2ecc71").pack(anchor="w", pady=(0, 5))
+        
+        check_row = ctk.CTkFrame(inner_updates, fg_color="transparent")
+        check_row.pack(fill="x", pady=(10, 0))
+        
         self.auto_update_var = ctk.StringVar(value="on" if self.auto_check_updates else "off")
-        ctk.CTkCheckBox(
-            frame,
-            text="Check for updates automatically on startup",
-            variable=self.auto_update_var,
-            onvalue="on",
-            offvalue="off",
-        ).pack(pady=(0, 18))
+        ctk.CTkCheckBox(check_row, text="Enable automatic version checks on startup", variable=self.auto_update_var, onvalue="on", offvalue="off", font=ctk.CTkFont(size=13), border_color="#2ecc71", hover_color="#2ecc71").pack(side="left")
+        
+        self.update_status_lbl = ctk.CTkLabel(inner_updates, textvariable=self.update_status_var, font=ctk.CTkFont(size=12, weight="bold"), text_color="#f1c40f")
+        self.update_status_lbl.pack(anchor="w", pady=(15, 0))
 
-        ctk.CTkLabel(frame, textvariable=self.update_status_var, font=ctk.CTkFont(size=14, weight="bold"), text_color="#f1c40f").pack(pady=(0, 25))
-
-        button_row = ctk.CTkFrame(frame, fg_color="transparent")
-        button_row.pack(pady=10)
-        ctk.CTkButton(button_row, text="SAVE CONFIG", width=220, height=45, corner_radius=10, fg_color="#1f538d", command=self.save_settings).pack(side="left", padx=8)
-        ctk.CTkButton(button_row, text="CHECK FOR UPDATES", width=220, height=45, corner_radius=10, fg_color="#2ecc71", text_color="black", command=lambda: self.check_for_updates(silent=False)).pack(side="left", padx=8)
+        # Bottom Action Bar
+        action_bar = ctk.CTkFrame(frame, fg_color="transparent")
+        action_bar.pack(fill="x", pady=(40, 0))
+        
+        ctk.CTkButton(action_bar, text="SAVE CHANGES", width=200, height=50, corner_radius=15, fg_color="#1f538d", font=ctk.CTkFont(size=14, weight="bold"), command=self.save_settings).pack(side="left", padx=(0, 15))
+        ctk.CTkButton(action_bar, text="CHECK FOR UPDATES", width=200, height=50, corner_radius=15, fg_color="#2a2a2a", font=ctk.CTkFont(size=14, weight="bold"), command=lambda: self.check_for_updates(silent=False)).pack(side="left")
 
     def save_settings(self):
         self.webhook_url = self.hook_input.get().strip()
