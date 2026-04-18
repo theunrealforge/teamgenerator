@@ -98,7 +98,7 @@ class CustomWarning(ctk.CTkToplevel):
         x, y = master.winfo_x() + (master.winfo_width()//2) - 150, master.winfo_y() + (master.winfo_height()//2) - 100
         self.geometry(f"300x200+{x}+{y}")
         f = ctk.CTkFrame(self, fg_color="#121212", border_width=2, border_color="#e74c3c", corner_radius=20); f.pack(fill="both", expand=True, padx=5, pady=5)
-        ctk.CTkLabel(f, text=message, font=ctk.CTkFont(size=16, weight="bold"), text_color="white", wraplength=250).pack(expand=True, pady=(20, 10))
+        ctk.CTkLabel(f, text=message, font=ctk.CTkFont(size=14, weight="bold"), text_color="white", wraplength=250).pack(expand=True, pady=(20, 10))
         ctk.CTkButton(f, text=button_text, width=100, height=35, corner_radius=10, fg_color="#e74c3c", hover_color="#c0392b", command=self.destroy).pack(pady=(0, 20))
 
 class CustomInfo(ctk.CTkToplevel):
@@ -109,7 +109,7 @@ class CustomInfo(ctk.CTkToplevel):
         x, y = master.winfo_x() + (master.winfo_width()//2) - 150, master.winfo_y() + (master.winfo_height()//2) - 100
         self.geometry(f"300x200+{x}+{y}")
         f = ctk.CTkFrame(self, fg_color="#121212", border_width=2, border_color=color, corner_radius=20); f.pack(fill="both", expand=True, padx=5, pady=5)
-        ctk.CTkLabel(f, text=message, font=ctk.CTkFont(size=16, weight="bold"), text_color="white", wraplength=250).pack(expand=True, pady=(20, 10))
+        ctk.CTkLabel(f, text=message, font=ctk.CTkFont(size=14, weight="bold"), text_color="white", wraplength=250).pack(expand=True, pady=(20, 10))
         ctk.CTkButton(f, text="OK", width=100, height=35, corner_radius=10, fg_color=color, hover_color="#2980b9", command=self.destroy).pack(pady=(0, 20))
 
 class PlayerDropdown(ctk.CTkToplevel):
@@ -176,11 +176,14 @@ class TeamGeneratorApp(ctk.CTk):
         self.webhook_url, self.auto_check_updates, self.active_db_name = str(c["webhook_url"]), coerce_bool(c["auto_check_updates"]), str(c["active_db"])
         self.update_manifest_url = str(c.get("update_manifest_url", DEFAULT_MANIFEST_URL))
     def save_config(self): write_json(CONFIG_PATH, {"webhook_url": self.webhook_url, "update_manifest_url": self.update_manifest_url, "auto_check_updates": self.auto_check_updates, "active_db": self.active_db_name})
-    def load_active_db(self):
+    def load_active_db(self, path=None):
+        if path:
+            try: self.player_db = normalize_player_db(read_json(path)); return True
+            except: return False
         p = os.path.join(DB_DIR, f"{self.active_db_name}.json")
         if not os.path.exists(p) and self.active_db_name == "default": write_json(p, {})
         self.player_db = normalize_player_db(read_json(p))
-    def save_active_db(self): write_json(os.path.join(DB_DIR, f"{self.active_db_name}.json"), self.player_db)
+    def save_active_db(self, path=None): write_json(path if path else os.path.join(DB_DIR, f"{self.active_db_name}.json"), self.player_db)
 
     def setup_ui(self):
         ts = ctk.CTkFrame(self.bg_frame, fg_color="transparent", height=60); ts.pack(fill="x", padx=30, pady=(20, 0))
@@ -272,24 +275,24 @@ class TeamGeneratorApp(ctk.CTk):
 
     def create_database_ui(self):
         f = ctk.CTkFrame(self.content_frame, fg_color="transparent"); self.frames["database"] = f
-        # NEW: Database Profile Row (at the top)
+        # Database Profile Row
         ctrl = ctk.CTkFrame(f, fg_color="#121212", corner_radius=15, border_width=1, border_color="#1f1f1f"); ctrl.pack(fill="x", pady=(0, 10))
         ctk.CTkLabel(ctrl, text="DATABASE PROFILE:", font=ctk.CTkFont(size=12, weight="bold")).pack(side="left", padx=(20, 10), pady=20)
         self.db_selector = ctk.CTkComboBox(ctrl, values=self.get_db_list(), width=220, command=self.switch_db); self.db_selector.set(self.active_db_name); self.db_selector.pack(side="left", padx=5)
         self.new_profile_entry = ctk.CTkEntry(ctrl, placeholder_text="New Profile Name...", width=180); self.new_profile_entry.pack(side="left", padx=5)
         ctk.CTkButton(ctrl, text="CREATE", width=80, fg_color="#2ecc71", text_color="black", font=ctk.CTkFont(weight="bold"), command=self.new_db_action).pack(side="left", padx=5)
         ctk.CTkButton(ctrl, text="DELETE", width=80, fg_color="#c0392b", command=self.delete_db_action).pack(side="left", padx=5)
-        # Original: Add Player Section
+        # Add Player Section
         add = ctk.CTkFrame(f, fg_color="#121212", corner_radius=15, border_width=1, border_color="#1f1f1f"); add.pack(fill="x", pady=5)
         ctk.CTkLabel(add, text="NAME:").pack(side="left", padx=15); self.db_name_input = ctk.CTkEntry(add, width=320, height=35); self.db_name_input.pack(side="left", padx=5, pady=15)
         ctk.CTkLabel(add, text="POINTS:").pack(side="left", padx=15); self.db_pts_input = ctk.CTkComboBox(add, values=[str(x) for x in range(1, 11)], width=90, height=35); self.db_pts_input.pack(side="left", padx=5)
         ctk.CTkButton(add, text="ADD PLAYER", width=140, height=35, corner_radius=8, fg_color="#1f538d", command=self.db_add_player).pack(side="right", padx=15)
-        # Original: Manage row
+        # Management Row (RESTORED FEATURES)
         manage_row = ctk.CTkFrame(f, fg_color="transparent"); manage_row.pack(fill="x", pady=5)
-        ctk.CTkButton(manage_row, text="LOAD DATABASE", width=150, fg_color="#2ecc71", text_color="black", font=ctk.CTkFont(weight="bold"), command=self.load_external_db).pack(side="left", padx=5)
-        ctk.CTkButton(manage_row, text="SAVE DATABASE AS", width=150, fg_color="#3498db", text_color="black", font=ctk.CTkFont(weight="bold"), command=self.save_db_as).pack(side="left", padx=5)
-        ctk.CTkButton(manage_row, text="NEW DATABASE", width=150, fg_color="#333333", command=self.new_database).pack(side="left", padx=5)
-        ctk.CTkButton(manage_row, text="DELETE ACTIVE", width=150, fg_color="#c0392b", command=self.delete_database).pack(side="left", padx=5)
+        ctk.CTkButton(manage_row, text="LOAD FROM FILE", width=160, fg_color="#2ecc71", text_color="black", font=ctk.CTkFont(weight="bold"), command=self.load_external_db).pack(side="left", padx=5)
+        ctk.CTkButton(manage_row, text="EXPORT DATABASE", width=160, fg_color="#3498db", text_color="black", font=ctk.CTkFont(weight="bold"), command=self.save_db_as).pack(side="left", padx=5)
+        ctk.CTkButton(manage_row, text="CLEAR PROFILE", width=160, fg_color="#333333", command=self.new_database).pack(side="left", padx=5)
+        ctk.CTkButton(manage_row, text="WIPE ACTIVE", width=160, fg_color="#c0392b", command=self.delete_database).pack(side="left", padx=5)
         self.db_scroll = ctk.CTkScrollableFrame(f, fg_color="transparent"); self.db_scroll.pack(fill="both", expand=True, pady=10)
 
     def get_db_list(self): return [f.replace(".json","") for f in os.listdir(DB_DIR) if f.endswith(".json")] or ["default"]
@@ -324,10 +327,10 @@ class TeamGeneratorApp(ctk.CTk):
     def load_external_db(self):
         p = filedialog.askopenfilename(filetypes=[("JSON", "*.json")])
         if p:
-            if self.load_active_db(p): self.save_active_db(); self.refresh_db_list(); CustomInfo(self, "Database Loaded!", "#2ecc71")
+            if self.load_active_db(p): self.save_active_db(); self.refresh_db_list(); CustomInfo(self, "Database Loaded into Profile!", "#2ecc71")
     def save_db_as(self):
         p = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON", "*.json")])
-        if p: write_json(p, self.player_db); CustomInfo(self, "Database Saved!", "#3498db")
+        if p: write_json(p, self.player_db); CustomInfo(self, "Database Exported!", "#3498db")
     def new_database(self):
         if messagebox.askyesno("NEW", "Clear current list?"): self.player_db = {}; self.save_active_db(); self.refresh_db_list()
     def delete_database(self):
