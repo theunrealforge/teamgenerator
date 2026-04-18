@@ -20,7 +20,7 @@ from urllib.parse import urljoin, urlparse
 if sys.platform == "win32":
     try:
         import ctypes
-        myappid = "theunrealforge.teamgenerator.final.v1.1"
+        myappid = "theunrealforge.teamgenerator.stable.v1.1"
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
     except: pass
 
@@ -369,6 +369,10 @@ class TeamGeneratorApp(ctk.CTk):
             self.t1_list.configure(text="\n".join([p['name'] for p in best_split[0]])); self.t2_list.configure(text="\n".join([p['name'] for p in best_split[1]]))
             self.t1_total_label.configure(text=f"Total: {sum(p['points'] for p in best_split[0])}"); self.t2_total_label.configure(text=f"Total: {sum(p['points'] for p in best_split[1])}")
         except: pass
+
+    def delete_teams(self):
+        self.t1_list.configure(text=""); self.t2_list.configure(text="")
+        self.t1_total_label.configure(text=""); self.t2_total_label.configure(text="")
 
     def get_saved_rosters(self): return sorted([f.replace(".json", "") for f in os.listdir(SAVES_DIR) if f.endswith(".json")], key=str.casefold)
     def save_roster_action(self):
