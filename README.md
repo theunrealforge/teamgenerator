@@ -1,20 +1,20 @@
 # Ultimate Team Generator
 
-A powerful, balanced team generator with a modern Windows 11 dark UI.
+A professional, portable, and balanced team generator with a modern Windows 11 dark UI.
 
-## Features
+## New Features
+- **Database Profiles:** Create and manage multiple player rosters. Switch between them instantly.
+- **Auto-Save System:** All settings and database changes are saved automatically.
 - **Ultra-Balanced Algorithm:** Generates fair teams based on player skill levels.
-- **Player Database:** Add, update, and manage your roster easily.
-- **Auto-Update:** Built-in system to keep your tool up to date.
-- **Discord Integration:** Share screenshots of generated teams via Webhooks.
-- **Portable:** Runs as a single `.exe` file.
+- **Professional Taskbar Presence:** High-resolution branding and proper Windows integration.
+- **Discord Integration:** Share team results automatically via Webhooks.
+- **True Portability:** All data is stored in a `data` folder next to the `.exe`.
 
 ## How it Works
 1. **Launch:** Run `TeamGenerator.exe`.
-2. **Add Players:** Go to the Database tab to add your players and assign them points (1-10).
-3. **Select Players:** In the Main tab, pick who's playing today from the dropdowns.
-4. **Generate:** Click "GENERATE TEAMS" to get balanced Matchups.
-5. **Share:** Use the "SHARE TO DISCORD" button to send the results to your server.
+2. **Database:** Create a profile, add players, and assign points (1-10). Changes save instantly.
+3. **Generator:** Select players from the dropdowns and click **GENERATE TEAMS**.
+4. **Discord:** Paste your webhook URL in Settings to share screenshots with your server.
 
 ## Installation
 Just download the latest `TeamGenerator.exe` from the Releases section and run it!

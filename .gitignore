@@ -12,7 +12,8 @@ dist/
 *.spec
 TeamGenerator.exe
 
-# User data
+# User data (Refactored to /data folder)
+data/
 config.json
 player_database.json
 NMK.json
