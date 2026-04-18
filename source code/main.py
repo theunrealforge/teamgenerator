@@ -279,10 +279,33 @@ class TeamGeneratorApp(ctk.CTk):
         
         # Set Window Icon
         if os.path.exists(ICON_PATH):
-            try: 
+            try:
                 import ctypes
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("TUF.TeamGenerator.1.1.0")
-                self.after(200, lambda: self.iconbitmap(ICON_PATH))
+                from ctypes import wintypes
+                
+                # Force Windows to treat this as a unique app for taskbar grouping
+                myappid = "TUF.TeamGenerator.v1"
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+                
+                # Standard Tkinter icon
+                self.iconbitmap(ICON_PATH)
+                
+                # Force high-res icon onto the window handles to fix "small" taskbar icon
+                def force_icon():
+                    try:
+                        hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
+                        if not hwnd: hwnd = self.winfo_id()
+                        
+                        # Load icon with specific sizes
+                        hicon_big = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 32, 32, 0x00000010)
+                        hicon_small = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 16, 16, 0x00000010)
+                        
+                        if hicon_big:
+                            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 1, hicon_big) # ICON_BIG
+                        if hicon_small:
+                            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 0, hicon_small) # ICON_SMALL
+                    except: pass
+                self.after(500, force_icon)
             except: pass
 
         self.bg_frame = ctk.CTkFrame(self, fg_color="#080808", corner_radius=35, border_width=1, border_color="#1f1f1f")
