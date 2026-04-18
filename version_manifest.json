@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "1.1.0",
   "url": "https://github.com/theunrealforge/teamgenerator/releases/latest/download/TeamGenerator.exe",
-  "notes": "UI Balance improvements: Enlarge logo to 25x25 and adjust text size. Enhanced Settings alignment."
+  "notes": "Version 1.1.0: Clean UI with 40x40 logo in corner and no header text."
 }
