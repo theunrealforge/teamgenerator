@@ -22,7 +22,7 @@ ctk.set_default_color_theme("blue")
 
 # PORTABLE + STANDALONE LOGIC
 APP_NAME = "TeamGenerator"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 REQUEST_TIMEOUT = 15
 AUTO_UPDATE_DELAY_MS = 1500
 GITHUB_USER = "theunrealforge"
@@ -389,7 +389,7 @@ class TeamGeneratorApp(ctk.CTk):
         if os.path.exists(icon_png_path):
             try:
                 from PIL import Image
-                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(22, 22))
+                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(25, 25))
                 self.logo_label = ctk.CTkLabel(self.top_section, image=self.logo_img, text="")
                 self.logo_label.pack(side="left", padx=(0, 10))
             except Exception as e:

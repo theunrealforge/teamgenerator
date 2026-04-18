@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "url": "https://github.com/theunrealforge/teamgenerator/releases/latest/download/TeamGenerator.exe",
-  "notes": "Initial release with GitHub Auto-Update support and balanced team algorithm."
+  "notes": "UI Balance improvements: Enlarge logo to 25x25 and adjust text size. Enhanced Settings alignment."
 }
