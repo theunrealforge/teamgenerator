@@ -76,6 +76,13 @@ def normalize_player_db(data):
     if not isinstance(data, dict): return {}
     return {str(k).strip(): str(v).strip() or "5" for k, v in data.items() if str(k).strip()}
 
+def coerce_bool(value, default=True):
+    if isinstance(value, bool): return value
+    lowered = str(value).strip().lower()
+    if lowered in {"1", "true", "yes", "on"}: return True
+    if lowered in {"0", "false", "no", "off"}: return False
+    return default
+
 def version_key(v): return tuple(int(p) for p in str(v).split('.') if p.isdigit())
 def is_newer_version(latest, current):
     try: return version_key(latest) > version_key(current)
