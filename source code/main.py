@@ -428,7 +428,8 @@ class TeamGeneratorApp(ctk.CTk):
             except Exception as e:
                 pass
 
-        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=8, weight="bold"), text_color="#ffffff").pack(side="left")
+        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=20, weight="bold"), text_color="#ffffff").pack(side="left")
+
 
         ctk.CTkButton(self.top_section, text="✕", width=40, height=40, corner_radius=10, fg_color="#1a1a1a", text_color="gray", hover_color="#e74c3c", command=self.quit).pack(side="right")
         
