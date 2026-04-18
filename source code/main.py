@@ -381,6 +381,20 @@ class TeamGeneratorApp(ctk.CTk):
         self.top_section = ctk.CTkFrame(self.bg_frame, fg_color="transparent", height=60)
         self.top_section.pack(side="top", fill="x", padx=30, pady=(20, 0))
         
+        # Load and display logo icon
+        icon_png_path = os.path.join(BASE_DIR, "icon.png")
+        if not os.path.exists(icon_png_path):
+             icon_png_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
+        
+        if os.path.exists(icon_png_path):
+            try:
+                from PIL import Image
+                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(20, 20))
+                self.logo_label = ctk.CTkLabel(self.top_section, image=self.logo_img, text="")
+                self.logo_label.pack(side="left", padx=(0, 10))
+            except Exception as e:
+                pass
+
         ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=18, weight="bold"), text_color="#ffffff").pack(side="left")
         ctk.CTkButton(self.top_section, text="✕", width=40, height=40, corner_radius=10, fg_color="#1a1a1a", text_color="gray", hover_color="#e74c3c", command=self.quit).pack(side="right")
         
@@ -625,8 +639,12 @@ class TeamGeneratorApp(ctk.CTk):
         action_bar = ctk.CTkFrame(frame, fg_color="transparent")
         action_bar.pack(fill="x", pady=(40, 0))
         
-        ctk.CTkButton(action_bar, text="SAVE CHANGES", width=200, height=50, corner_radius=15, fg_color="#1f538d", font=ctk.CTkFont(size=14, weight="bold"), command=self.save_settings).pack(side="left", padx=(0, 15))
-        ctk.CTkButton(action_bar, text="CHECK FOR UPDATES", width=200, height=50, corner_radius=15, fg_color="#2a2a2a", font=ctk.CTkFont(size=14, weight="bold"), command=lambda: self.check_for_updates(silent=False)).pack(side="left")
+        # Center the buttons
+        inner_actions = ctk.CTkFrame(action_bar, fg_color="transparent")
+        inner_actions.pack(expand=True)
+        
+        ctk.CTkButton(inner_actions, text="SAVE CHANGES", width=200, height=50, corner_radius=15, fg_color="#1f538d", font=ctk.CTkFont(size=14, weight="bold"), command=self.save_settings).pack(side="left", padx=10)
+        ctk.CTkButton(inner_actions, text="CHECK FOR UPDATES", width=200, height=50, corner_radius=15, fg_color="#2a2a2a", font=ctk.CTkFont(size=14, weight="bold"), command=lambda: self.check_for_updates(silent=False)).pack(side="left", padx=10)
 
     def save_settings(self):
         self.webhook_url = self.hook_input.get().strip()
