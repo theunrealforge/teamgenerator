@@ -296,9 +296,9 @@ class TeamGeneratorApp(ctk.CTk):
                         hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
                         if not hwnd: hwnd = self.winfo_id()
                         
-                        # Load icon with specific sizes
-                        hicon_big = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 32, 32, 0x00000010)
-                        hicon_small = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 16, 16, 0x00000010)
+                        # Load icon with specific sizes (using 64x64 for BIG to ensure it looks large on taskbar)
+                        hicon_big = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 64, 64, 0x00000010)
+                        hicon_small = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 32, 32, 0x00000010)
                         
                         if hicon_big:
                             ctypes.windll.user32.SendMessageW(hwnd, 0x80, 1, hicon_big) # ICON_BIG
@@ -427,13 +427,13 @@ class TeamGeneratorApp(ctk.CTk):
         if os.path.exists(icon_png_path):
             try:
                 from PIL import Image
-                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(45, 45))
+                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(42, 42))
                 self.logo_label = ctk.CTkLabel(self.top_section, image=self.logo_img, text="")
-                self.logo_label.pack(side="left", padx=(0, 5))
+                self.logo_label.pack(side="left", padx=(0, 2))
             except Exception as e:
                 pass
 
-        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=16, weight="bold"), text_color="#ffffff").pack(side="left")
+        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=6, weight="bold"), text_color="#ffffff").pack(side="left")
 
         ctk.CTkButton(self.top_section, text="✕", width=40, height=40, corner_radius=10, fg_color="#1a1a1a", text_color="gray", hover_color="#e74c3c", command=self.quit).pack(side="right")
         
