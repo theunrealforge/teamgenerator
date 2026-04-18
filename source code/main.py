@@ -281,20 +281,25 @@ class TeamGeneratorApp(ctk.CTk):
         if os.path.exists(ICON_PATH):
             try:
                 import ctypes
-                # Unique ID to force Windows to refresh the taskbar icon cache
-                myappid = "TUF.TeamGenerator.FinalV1.1"
+                # New unique ID to force Windows to completely refresh the icon cache
+                myappid = "TUF.TeamGenerator.Ultimate.V2"
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
                 
                 self.iconbitmap(ICON_PATH)
                 
                 def force_icon():
                     try:
+                        # Find the actual Windows handle for the top-level window
                         hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
                         if not hwnd: hwnd = self.winfo_id()
-                        # Use 384x384 (1.5x of 256) to ensure Windows accepts and displays it at full taskbar size
-                        hicon = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 384, 384, 0x00000010)
-                        if hicon:
-                            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 1, hicon) # ICON_BIG
+                        
+                        # Load high-res icon handles (256 is the high-res source)
+                        hicon_big = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 256, 256, 0x00000010)
+                        
+                        if hicon_big:
+                            # WM_SETICON = 0x80
+                            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 1, hicon_big) # ICON_BIG
+                            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 0, hicon_big) # Force SMALL to also use BIG source
                     except: pass
                 self.after(500, force_icon)
             except: pass
