@@ -76,13 +76,6 @@ def normalize_player_db(data):
     if not isinstance(data, dict): return {}
     return {str(k).strip(): str(v).strip() or "5" for k, v in data.items() if str(k).strip()}
 
-def coerce_bool(value, default=True):
-    if isinstance(value, bool): return value
-    lowered = str(value).strip().lower()
-    if lowered in {"1", "true", "yes", "on"}: return True
-    if lowered in {"0", "false", "no", "off"}: return False
-    return default
-
 def version_key(v): return tuple(int(p) for p in str(v).split('.') if p.isdigit())
 def is_newer_version(latest, current):
     try: return version_key(latest) > version_key(current)
@@ -275,51 +268,67 @@ class TeamGeneratorApp(ctk.CTk):
 
     def create_database_ui(self):
         f = ctk.CTkFrame(self.content_frame, fg_color="transparent"); self.frames["database"] = f
-        
-        # 1. Profile Section (The Top Unit)
+        # 1. Profile Section (MATCHING database.png)
         p_frame = ctk.CTkFrame(f, fg_color="#121212", corner_radius=15, border_width=1, border_color="#1f1f1f")
         p_frame.pack(fill="x", pady=(0, 10))
+        p_inner = ctk.CTkFrame(p_frame, fg_color="transparent"); p_inner.pack(fill="x", padx=20, pady=15)
+        ctk.CTkLabel(p_inner, text="👤  PROFILE MANAGEMENT", font=ctk.CTkFont(size=12, weight="bold"), text_color="#a29bfe").pack(anchor="w", pady=(0, 10))
         
-        # Left: Active Switcher
-        p_left = ctk.CTkFrame(p_frame, fg_color="transparent")
-        p_left.pack(side="left", padx=20, pady=15)
-        ctk.CTkLabel(p_left, text="ACTIVE PROFILE:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#888888").pack(anchor="w")
-        self.db_selector = ctk.CTkComboBox(p_left, values=self.get_db_list(), width=250, height=35, command=self.switch_db, fg_color="#0a0a0a")
-        self.db_selector.set(self.active_db_name); self.db_selector.pack(pady=(2, 0))
+        row1 = ctk.CTkFrame(p_inner, fg_color="transparent"); row1.pack(fill="x")
+        c1 = ctk.CTkFrame(row1, fg_color="transparent"); c1.pack(side="left")
+        ctk.CTkLabel(c1, text="Active Profile", font=ctk.CTkFont(size=11), text_color="gray").pack(anchor="w")
+        self.db_selector = ctk.CTkComboBox(c1, values=self.get_db_list(), width=280, height=35, command=self.switch_db, fg_color="#0a0a0a"); self.db_selector.set(self.active_db_name); self.db_selector.pack()
         
-        # Right: Creation Area
-        p_right = ctk.CTkFrame(p_frame, fg_color="transparent")
-        p_right.pack(side="right", padx=20, pady=15)
-        ctk.CTkLabel(p_right, text="NEW PROFILE NAME:", font=ctk.CTkFont(size=11, weight="bold"), text_color="#888888").pack(anchor="w")
-        self.new_profile_entry = ctk.CTkEntry(p_right, placeholder_text="Enter Name...", width=200, height=35, fg_color="#0a0a0a")
-        self.new_profile_entry.pack(side="left", padx=(0, 5), pady=(2, 0))
-        ctk.CTkButton(p_right, text="CREATE", width=90, height=35, fg_color="#2ecc71", text_color="black", font=ctk.CTkFont(weight="bold"), command=self.new_db_action).pack(side="left", pady=(2, 0))
-        ctk.CTkButton(p_right, text="DELETE", width=90, height=35, fg_color="#c0392b", command=self.delete_db_action).pack(side="left", padx=(5, 0), pady=(2, 0))
+        c2 = ctk.CTkFrame(row1, fg_color="transparent"); c2.pack(side="left", padx=20)
+        ctk.CTkLabel(c2, text="New Profile Name", font=ctk.CTkFont(size=11), text_color="gray").pack(anchor="w")
+        self.new_profile_entry = ctk.CTkEntry(c2, placeholder_text="Enter profile name...", width=250, height=35, fg_color="#0a0a0a"); self.new_profile_entry.pack()
+        
+        ctk.CTkButton(row1, text="＋ CREATE", width=100, height=35, fg_color="#1f538d", font=ctk.CTkFont(weight="bold"), command=self.new_db_action).pack(side="left", padx=(5, 0), pady=(18, 0))
+        ctk.CTkButton(row1, text="🗑 DELETE", width=100, height=35, fg_color="#c0392b", font=ctk.CTkFont(weight="bold"), command=self.delete_db_action).pack(side="left", padx=10, pady=(18, 0))
 
         # 2. Player Entry Card
         a_frame = ctk.CTkFrame(f, fg_color="#121212", corner_radius=15, border_width=1, border_color="#1f1f1f")
         a_frame.pack(fill="x", pady=5)
+        a_inner = ctk.CTkFrame(a_frame, fg_color="transparent"); a_inner.pack(fill="x", padx=20, pady=15)
+        ctk.CTkLabel(a_inner, text="👤+  ADD PLAYER", font=ctk.CTkFont(size=12, weight="bold"), text_color="#a29bfe").pack(anchor="w", pady=(0, 10))
         
-        ctk.CTkLabel(a_frame, text="PLAYER NAME:").pack(side="left", padx=(25, 5), pady=20)
-        self.db_name_input = ctk.CTkEntry(a_frame, width=420, height=40, fg_color="#0a0a0a"); self.db_name_input.pack(side="left", padx=5)
-        ctk.CTkLabel(a_frame, text="POINTS:").pack(side="left", padx=(15, 5))
-        self.db_pts_input = ctk.CTkComboBox(a_frame, values=[str(x) for x in range(1, 11)], width=90, height=40, fg_color="#0a0a0a"); self.db_pts_input.pack(side="left", padx=5)
-        ctk.CTkButton(a_frame, text="ADD TO LIST", width=160, height=45, corner_radius=10, fg_color="#1f538d", font=ctk.CTkFont(weight="bold"), command=self.db_add_player).pack(side="right", padx=25)
+        row2 = ctk.CTkFrame(a_inner, fg_color="transparent"); row2.pack(fill="x")
+        c3 = ctk.CTkFrame(row2, fg_color="transparent"); c3.pack(side="left")
+        ctk.CTkLabel(c3, text="Player Name", font=ctk.CTkFont(size=11), text_color="gray").pack(anchor="w")
+        self.db_name_input = ctk.CTkEntry(c3, width=450, height=35, fg_color="#0a0a0a"); self.db_name_input.pack()
+        
+        c4 = ctk.CTkFrame(row2, fg_color="transparent"); c4.pack(side="left", padx=20)
+        ctk.CTkLabel(c4, text="Points", font=ctk.CTkFont(size=11), text_color="gray").pack(anchor="w")
+        self.db_pts_input = ctk.CTkComboBox(c4, values=[str(x) for x in range(1, 11)], width=120, height=35, fg_color="#0a0a0a"); self.db_pts_input.set("5"); self.db_pts_input.pack()
+        
+        ctk.CTkButton(row2, text="ADD TO LIST", width=180, height=45, fg_color="#1f538d", font=ctk.CTkFont(weight="bold"), command=self.db_add_player).pack(side="right", pady=(18, 0))
 
-        # 3. Action Toolbar (Load, Export, Clear, Wipe)
-        t_frame = ctk.CTkFrame(f, fg_color="transparent")
-        t_frame.pack(fill="x", pady=10)
+        # 3. Database Actions Unit
+        d_frame = ctk.CTkFrame(f, fg_color="#121212", corner_radius=15, border_width=1, border_color="#1f1f1f")
+        d_frame.pack(fill="x", pady=5)
+        d_inner = ctk.CTkFrame(d_frame, fg_color="transparent"); d_inner.pack(fill="x", padx=20, pady=15)
+        ctk.CTkLabel(d_inner, text="🗄️  DATABASE ACTIONS", font=ctk.CTkFont(size=12, weight="bold"), text_color="#a29bfe").pack(anchor="w", pady=(0, 15))
         
-        ctk.CTkButton(t_frame, text="LOAD FROM FILE", width=180, height=38, fg_color="#2ecc71", text_color="black", font=ctk.CTkFont(size=12, weight="bold"), command=self.load_external_db).pack(side="left", padx=5)
-        ctk.CTkButton(t_frame, text="EXPORT DATABASE", width=180, height=38, fg_color="#3498db", text_color="black", font=ctk.CTkFont(size=12, weight="bold"), command=self.save_db_as).pack(side="left", padx=5)
+        grid = ctk.CTkFrame(d_inner, fg_color="transparent"); grid.pack(fill="x")
         
-        # Destructive actions on the right
-        ctk.CTkButton(t_frame, text="WIPE ACTIVE PROFILE", width=180, height=38, fg_color="#c0392b", font=ctk.CTkFont(size=12), command=self.delete_database).pack(side="right", padx=5)
-        ctk.CTkButton(t_frame, text="CLEAR CURRENT LIST", width=180, height=38, fg_color="#333333", font=ctk.CTkFont(size=12), command=self.new_database).pack(side="right", padx=5)
-        
+        # Sub-sections
+        g1 = ctk.CTkFrame(grid, fg_color="#1a1a1a", corner_radius=10, border_width=1, border_color="#252525"); g1.pack(side="left", expand=True, fill="both", padx=5)
+        ctk.CTkLabel(g1, text="IMPORT / EXPORT", font=ctk.CTkFont(size=11, weight="bold"), text_color="gray").pack(pady=10)
+        ctk.CTkButton(g1, text="📤 IMPORT FROM FILE", width=220, height=35, fg_color="#2a2a2a", command=self.load_external_db).pack(pady=5)
+        ctk.CTkButton(g1, text="📥 EXPORT DATABASE", width=220, height=35, fg_color="#2a2a2a", command=self.save_db_as).pack(pady=(5, 15))
+
+        g2 = ctk.CTkFrame(grid, fg_color="#1a1a1a", corner_radius=10, border_width=1, border_color="#252525"); g2.pack(side="left", expand=True, fill="both", padx=5)
+        ctk.CTkLabel(g2, text="LIST MANAGEMENT", font=ctk.CTkFont(size=11, weight="bold"), text_color="gray").pack(pady=10)
+        ctk.CTkButton(g2, text="🧹 CLEAR CURRENT LIST", width=220, height=35, fg_color="#2a2a2a", command=self.new_database).pack(pady=(5, 15))
+
+        g3 = ctk.CTkFrame(grid, fg_color="#1a1a1a", corner_radius=10, border_width=1, border_color="#252525"); g3.pack(side="left", expand=True, fill="both", padx=5)
+        ctk.CTkLabel(g3, text="DANGER ZONE", font=ctk.CTkFont(size=11, weight="bold"), text_color="#e74c3c").pack(pady=10)
+        ctk.CTkButton(g3, text="⚠️ WIPE ACTIVE PROFILE", width=220, height=35, fg_color="#4b1d1d", hover_color="#6b2525", command=self.delete_database).pack(pady=(5, 15))
+
         # 4. Scroll List
-        self.db_scroll = ctk.CTkScrollableFrame(f, fg_color="transparent")
-        self.db_scroll.pack(fill="both", expand=True, pady=(5, 0))
+        self.db_scroll = ctk.CTkScrollableFrame(f, fg_color="#050505", corner_radius=20, border_width=1, border_color="#1f1f1f")
+        self.db_scroll.pack(fill="both", expand=True, pady=10)
+        self.empty_lbl = ctk.CTkLabel(self.db_scroll, text="👥\n\nNo players in the list.", font=ctk.CTkFont(size=16), text_color="#444444")
 
     def get_db_list(self): return [f.replace(".json","") for f in os.listdir(DB_DIR) if f.endswith(".json")] or ["default"]
     def switch_db(self, name): self.active_db_name = name; self.save_config(); self.load_active_db(); self.refresh_db_list()
@@ -344,6 +353,9 @@ class TeamGeneratorApp(ctk.CTk):
 
     def refresh_db_list(self):
         for widget in self.db_scroll.winfo_children(): widget.destroy()
+        if not self.player_db:
+            self.empty_lbl = ctk.CTkLabel(self.db_scroll, text="👥\n\nNo players in the list.", font=ctk.CTkFont(size=16), text_color="#444444")
+            self.empty_lbl.pack(expand=True, pady=100); return
         for name, pts in sorted(self.player_db.items(), key=lambda x: x[0].casefold()):
             row = ctk.CTkFrame(self.db_scroll, fg_color="#121212", corner_radius=10); row.pack(fill="x", pady=4, padx=5)
             ctk.CTkLabel(row, text=name, width=250, anchor="w", font=ctk.CTkFont(size=14, weight="bold")).pack(side="left", padx=20, pady=10)
@@ -353,7 +365,7 @@ class TeamGeneratorApp(ctk.CTk):
     def load_external_db(self):
         p = filedialog.askopenfilename(filetypes=[("JSON", "*.json")])
         if p:
-            if self.load_active_db(p): self.save_active_db(); self.refresh_db_list(); CustomInfo(self, "Database Loaded into Profile!", "#2ecc71")
+            if self.load_active_db(p): self.save_active_db(); self.refresh_db_list(); CustomInfo(self, "Database Imported!", "#2ecc71")
     def save_db_as(self):
         p = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON", "*.json")])
         if p: write_json(p, self.player_db); CustomInfo(self, "Database Exported!", "#3498db")
@@ -365,18 +377,28 @@ class TeamGeneratorApp(ctk.CTk):
     def create_settings_ui(self):
         f = ctk.CTkFrame(self.content_frame, fg_color="transparent"); self.frames["settings"] = f
         ctk.CTkLabel(f, text="APPLICATION SETTINGS", font=ctk.CTkFont(size=22, weight="bold"), text_color="#ffffff").pack(anchor="w", pady=(20, 30))
+        
+        # Original logic restored: Manual Save Button
         dc = ctk.CTkFrame(f, fg_color="#121212", corner_radius=20, border_width=1, border_color="#1f1f1f"); dc.pack(fill="x", pady=10)
         idc = ctk.CTkFrame(dc, fg_color="transparent"); idc.pack(fill="x", padx=30, pady=25)
-        ctk.CTkLabel(idc, text="DISCORD INTEGRATION", font=ctk.CTkFont(size=14, weight="bold"), text_color="#5865F2").pack(anchor="w", pady=(0, 5))
-        self.hook_in = ctk.CTkEntry(idc, height=45, placeholder_text="Paste Webhook URL..."); self.hook_in.pack(fill="x"); self.hook_in.insert(0, self.webhook_url); self.hook_in.bind("<KeyRelease>", lambda e: self.auto_save_set())
+        ctk.CTkLabel(idc, text="DISCORD INTEGRATION", font=ctk.CTkFont(size=14, weight="bold"), text_color="#5865F2").pack(anchor="w", pady=(0, 10))
+        ctk.CTkLabel(idc, text="Enter your server webhook URL to share results.", font=ctk.CTkFont(size=12), text_color="gray").pack(anchor="w", pady=(0, 10))
+        self.hook_in = ctk.CTkEntry(idc, height=45, placeholder_text="Paste Webhook URL..."); self.hook_in.pack(fill="x"); self.hook_in.insert(0, self.webhook_url)
+        
         uc = ctk.CTkFrame(f, fg_color="#121212", corner_radius=20, border_width=1, border_color="#1f1f1f"); uc.pack(fill="x", pady=10)
         iuc = ctk.CTkFrame(uc, fg_color="transparent"); iuc.pack(fill="x", padx=30, pady=25)
         self.up_v = ctk.StringVar(value="on" if self.auto_check_updates else "off")
-        ctk.CTkCheckBox(iuc, text="Enable automatic version checks", variable=self.up_v, onvalue="on", offvalue="off", command=self.auto_save_set).pack(side="left")
+        ctk.CTkCheckBox(iuc, text="Enable automatic version checks on startup", variable=self.up_v, onvalue="on", offvalue="off").pack(side="left")
         ctk.CTkLabel(iuc, textvariable=self.update_status_var, font=ctk.CTkFont(size=12, weight="bold"), text_color="#f1c40f").pack(side="right")
-        ctk.CTkButton(f, text="CHECK FOR UPDATES NOW", height=50, fg_color="#2a2a2a", command=lambda: self.schedule_auto_update_check()).pack(fill="x", pady=20)
+        
+        btn_row = ctk.CTkFrame(f, fg_color="transparent"); btn_row.pack(fill="x", pady=40)
+        ctk.CTkButton(btn_row, text="SAVE CHANGES", width=220, height=50, corner_radius=15, fg_color="#1f538d", font=ctk.CTkFont(weight="bold"), command=self.manual_save_settings).pack(side="left", padx=5)
+        ctk.CTkButton(btn_row, text="CHECK FOR UPDATES", width=220, height=50, corner_radius=15, fg_color="#2a2a2a", font=ctk.CTkFont(weight="bold"), command=lambda: self.schedule_auto_update_check()).pack(side="left", padx=10)
 
-    def auto_save_set(self): self.webhook_url, self.auto_check_updates = self.hook_in.get().strip(), self.up_v.get()=="on"; self.save_config()
+    def manual_save_settings(self):
+        self.webhook_url = self.hook_in.get().strip()
+        self.auto_check_updates = self.up_v.get() == "on"
+        self.save_config(); CustomInfo(self, "Settings Saved!", "#3498db")
 
     def generate_teams(self):
         try:
