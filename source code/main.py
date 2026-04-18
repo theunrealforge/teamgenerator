@@ -284,7 +284,23 @@ class TeamGeneratorApp(ctk.CTk):
                 # Force Windows to treat this as a unique app for taskbar grouping
                 myappid = "TUF.TeamGenerator.v1"
                 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-                self.after(200, lambda: self.iconbitmap(ICON_PATH))
+                
+                # Standard Tkinter icon
+                self.iconbitmap(ICON_PATH)
+                
+                # Force high-res icon onto the window handles to fix "small" taskbar icon
+                def force_icon():
+                    try:
+                        hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
+                        if not hwnd: hwnd = self.winfo_id()
+                        
+                        # Load icon with large size to ensure it fills taskbar (256 is max standard)
+                        hicon_big = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 256, 256, 0x00000010)
+                        
+                        if hicon_big:
+                            ctypes.windll.user32.SendMessageW(hwnd, 0x80, 1, hicon_big) # ICON_BIG
+                    except: pass
+                self.after(500, force_icon)
             except: pass
 
         self.bg_frame = ctk.CTkFrame(self, fg_color="#080808", corner_radius=35, border_width=1, border_color="#1f1f1f")
