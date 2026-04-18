@@ -270,11 +270,6 @@ class TeamGeneratorApp(ctk.CTk):
         self.wm_attributes("-transparentcolor", "#000001")
         self.configure(fg_color="#000001")
         
-        # Set Window Icon
-        if os.path.exists(ICON_PATH):
-            try: self.after(200, lambda: self.iconbitmap(ICON_PATH))
-            except: pass
-
         self.bg_frame = ctk.CTkFrame(self, fg_color="#080808", corner_radius=35, border_width=1, border_color="#1f1f1f")
         self.bg_frame.pack(fill="both", expand=True)
         self.player_vars = [ctk.StringVar(value=PLACEHOLDER) for _ in range(10)]
