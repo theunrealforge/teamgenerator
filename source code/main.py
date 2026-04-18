@@ -296,8 +296,8 @@ class TeamGeneratorApp(ctk.CTk):
                         hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
                         if not hwnd: hwnd = self.winfo_id()
                         
-                        # Load icon with specific sizes (using 64x64 for BIG to ensure it looks large on taskbar)
-                        hicon_big = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 64, 64, 0x00000010)
+                        # Load icon with specific sizes (using 128x128 for BIG to ensure it looks large on taskbar)
+                        hicon_big = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 128, 128, 0x00000010)
                         hicon_small = ctypes.windll.user32.LoadImageW(None, ICON_PATH, 1, 32, 32, 0x00000010)
                         
                         if hicon_big:
@@ -433,7 +433,7 @@ class TeamGeneratorApp(ctk.CTk):
             except Exception as e:
                 pass
 
-        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=6, weight="bold"), text_color="#ffffff").pack(side="left")
+        ctk.CTkLabel(self.top_section, text="TEAM GENERATOR", font=ctk.CTkFont(size=8, weight="bold"), text_color="#ffffff").pack(side="left")
 
         ctk.CTkButton(self.top_section, text="✕", width=40, height=40, corner_radius=10, fg_color="#1a1a1a", text_color="gray", hover_color="#e74c3c", command=self.quit).pack(side="right")
         
