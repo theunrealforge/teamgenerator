@@ -404,9 +404,9 @@ class TeamGeneratorApp(ctk.CTk):
         if os.path.exists(icon_png_path):
             try:
                 from PIL import Image
-                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(40, 40))
+                self.logo_img = ctk.CTkImage(light_image=Image.open(icon_png_path), size=(45, 45))
                 self.logo_label = ctk.CTkLabel(self.top_section, image=self.logo_img, text="")
-                self.logo_label.pack(side="left", padx=(0, 8))
+                self.logo_label.pack(side="left", padx=(0, 5))
             except Exception as e:
                 pass
 
