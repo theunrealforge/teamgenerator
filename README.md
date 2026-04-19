@@ -1,20 +1,21 @@
-# Ultimate Team Generator
+# Ultimate Team Generator (v1.0.1)
 
-A professional, portable, and balanced team generator with a modern Windows 11 dark UI.
+A professional, portable, and balanced team generator with a modern Windows 11 deep dark UI.
 
 ## New Features
-- **Database Profiles:** Create and manage multiple player rosters. Switch between them instantly.
-- **Auto-Save System:** All settings and database changes are saved automatically.
-- **Ultra-Balanced Algorithm:** Generates fair teams based on player skill levels.
-- **Professional Taskbar Presence:** High-resolution branding and proper Windows integration.
-- **Discord Integration:** Share team results automatically via Webhooks.
-- **True Portability:** All data is stored in a `data` folder next to the `.exe`.
+- **Complete UI Overhaul:** Compact, professional zero-scroll layout with high-quality PNG icons.
+- **Dual Theme Support:** Perfectly optimized for both **Light** and **Dark** modes.
+- **Database Profiles:** Create and manage multiple player rosters with instant switching.
+- **Intelligent Selection:** Dropdown menus turn green on valid player selection; supports quick typing and click-to-open.
+- **Ultra-Balanced Algorithm:** Generates the fairest possible teams based on player points.
+- **Discord Integration:** One-click team sharing to your server via Webhooks with high-contrast screenshots.
+- **Hidden Storage:** Keeps your workspace clean; all data is safely stored in `%APPDATA%\TeamGenerator`.
 
 ## How it Works
 1. **Launch:** Run `TeamGenerator.exe`.
-2. **Database:** Create a profile, add players, and assign points (1-10). Changes save instantly.
-3. **Generator:** Select players from the dropdowns and click **GENERATE TEAMS**.
-4. **Discord:** Paste your webhook URL in Settings to share screenshots with your server.
+2. **Database:** Create a profile, add players, and assign points (1-10).
+3. **Generator:** Select players from the slots (type or use the ▼ dropdown) and click **GENERATE**.
+4. **Discord:** Paste your webhook URL in Settings to share high-resolution team screenshots.
 
 ## Installation
-Just download the latest `TeamGenerator.exe` from the Releases section and run it!
+Just download the latest `TeamGenerator.exe` from the Releases section and run it! No installation required.

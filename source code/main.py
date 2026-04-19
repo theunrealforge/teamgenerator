@@ -120,7 +120,7 @@ class PlayerDropdown(ctk.CTkToplevel):
         self.scroll = ctk.CTkScrollableFrame(mf, fg_color="transparent", corner_radius=15); self.scroll.pack(fill="both", expand=True, padx=5, pady=5)
         self.all_players = sorted(players, key=str.casefold); self.selected_names = {n.casefold() for n in selected_names if isinstance(n, str) and n.strip()}
         entry = self.master_app.player_entries[slot_idx]
-        self.geometry(f"{entry.winfo_width()+80}x300+{entry.winfo_rootx()}+{entry.winfo_rooty()+entry.winfo_height()+5}")
+        self.geometry(f"{entry.winfo_width()+100}x300+{entry.winfo_rootx()}+{entry.winfo_rooty()+entry.winfo_height()+5}")
         self.refresh(""); self.bind("<FocusOut>", lambda e: self.after(200, self.check_destroy))
     def check_destroy(self):
         try:
@@ -161,7 +161,7 @@ class TeamGeneratorApp(ctk.CTk):
         self.points_vars = [ctk.StringVar(value="5") for _ in range(10)]
         self.update_status_var = ctk.StringVar(value=f"Version {APP_VERSION}")
         self.webhook_url, self.active_db_name, self.auto_check_updates = "", "default", True
-        self.player_entries, self.dropdown_window = [], None
+        self.player_entries, self.dropdown_btns, self.dropdown_window = [], [], None
         self.is_updating, self.is_checking_updates, self.is_installing_update = False, False, False
 
         # Load Icons (Support Light/Dark)
@@ -204,7 +204,7 @@ class TeamGeneratorApp(ctk.CTk):
                 self.logo_img = ctk.CTkImage(light_image=Image.open(ICON_PNG_PATH), size=(40, 40))
                 ctk.CTkLabel(ts, image=self.logo_img, text="").pack(side="left", padx=(0, 10))
             except: pass
-        ctk.CTkLabel(ts, text="TEAM GENERATOR", font=ctk.CTkFont(size=22, weight="bold"), text_color=COLOR_TEXT_MAIN).pack(side="left")
+        ctk.CTkLabel(ts, text="TEAM GENERATOR", font=ctk.CTkFont(size=16, weight="bold"), text_color=COLOR_TEXT_MAIN).pack(side="left")
         ctk.CTkButton(ts, text="✕", width=45, height=45, corner_radius=12, fg_color=COLOR_GRAY_DARK, text_color=COLOR_TEXT_MAIN, hover_color=COLOR_RED, font=ctk.CTkFont(size=18), command=self.quit).pack(side="right")
         
         self.nav_frame = ctk.CTkFrame(self.bg_frame, fg_color="transparent"); self.nav_frame.pack(pady=(10, 20))
@@ -240,7 +240,6 @@ class TeamGeneratorApp(ctk.CTk):
         
         r_row = ctk.CTkFrame(ri, fg_color="transparent"); r_row.pack(fill="x")
         self.roster_combo = ctk.CTkComboBox(r_row, values=self.get_saved_rosters(), height=35, fg_color=COLOR_CARD_INNER, border_color=COLOR_BORDER, corner_radius=6); self.roster_combo.set("Select Roster..."); self.roster_combo.pack(side="left", expand=True, fill="x", padx=(35, 10))
-        # LOAD/SAVE Aligned with points/trash width area
         ctk.CTkButton(r_row, text="LOAD", image=self.icons.get("load"), compound="left", width=110, height=35, fg_color=COLOR_PURPLE, hover_color=COLOR_PURPLE_HOVER, corner_radius=6, font=ctk.CTkFont(size=11, weight="bold"), command=self.load_roster_action).pack(side="left", padx=2)
         ctk.CTkButton(r_row, text="SAVE", image=self.icons.get("save"), compound="left", width=110, height=35, fg_color=COLOR_GRAY_DARK, hover_color=COLOR_GRAY_HOVER, corner_radius=6, font=ctk.CTkFont(size=11, weight="bold"), command=self.save_roster_action).pack(side="left", padx=2)
 
@@ -264,15 +263,21 @@ class TeamGeneratorApp(ctk.CTk):
         ctk.CTkLabel(h_row, text="PLAYER NAME", font=ctk.CTkFont(size=10, weight="bold"), text_color=COLOR_TEXT_DIM).pack(side="left", padx=10)
         ctk.CTkLabel(h_row, text="POINTS", font=ctk.CTkFont(size=10, weight="bold"), text_color=COLOR_TEXT_DIM).pack(side="right", padx=75)
 
-        self.player_entries = []
+        self.player_entries, self.dropdown_btns = [], []
         for i in range(10):
             r = ctk.CTkFrame(pi, fg_color="transparent"); r.pack(fill="x", pady=0)
             ctk.CTkLabel(r, text=str(i+1), width=25, text_color=COLOR_TEXT_DIM, font=ctk.CTkFont(size=11, weight="bold")).pack(side="left")
+            
+            # Integrated Slot: Left for typing, right area for dropdown
             e = ctk.CTkEntry(r, textvariable=self.player_vars[i], height=26, fg_color=COLOR_CARD_INNER, border_color=COLOR_BORDER, corner_radius=5); e.pack(side="left", expand=True, fill="x", padx=(10, 0)); self.player_entries.append(e)
-            ctk.CTkButton(r, text="▼", width=30, height=26, corner_radius=5, fg_color=COLOR_GRAY_DARK, hover_color=COLOR_GRAY_HOVER, text_color=COLOR_TEXT_MAIN, command=lambda idx=i: self.sync_dropdown(idx, "", True)).pack(side="left", padx=4)
             e.bind("<Button-1>", lambda ev, idx=i: self.handle_entry_click(ev, idx))
+            
+            # Dropdown Icon Overlay/Button (turns green when player found)
+            db = ctk.CTkButton(r, text="▼", width=30, height=26, corner_radius=5, fg_color=COLOR_GRAY_DARK, hover_color=COLOR_GRAY_HOVER, text_color=COLOR_TEXT_MAIN, command=lambda idx=i: self.sync_dropdown(idx, "", False))
+            db.pack(side="left", padx=4); self.dropdown_btns.append(db)
+            
             ctk.CTkComboBox(r, values=[str(x) for x in range(1, 11)], variable=self.points_vars[i], width=75, height=26, fg_color=COLOR_CARD_INNER, border_color=COLOR_BORDER, corner_radius=5, command=lambda v, idx=i: self.update_points(v, idx)).pack(side="left", padx=4)
-            ctk.CTkButton(r, text="", image=self.icons.get("trash"), width=30, height=26, corner_radius=5, fg_color=COLOR_GRAY_DARK, hover_color=COLOR_RED, command=lambda idx=i: (self.player_vars[idx].set(PLACEHOLDER), self.player_entries[idx].configure(text_color=COLOR_TEXT_MAIN))).pack(side="left")
+            ctk.CTkButton(r, text="", image=self.icons.get("trash"), width=30, height=26, corner_radius=5, fg_color=COLOR_GRAY_DARK, hover_color=COLOR_RED, command=lambda idx=i: self.clear_slot(idx)).pack(side="left")
 
         # 3. ACTIONS SECTION
         a_card = ctk.CTkFrame(f, fg_color=COLOR_CARD, corner_radius=12, border_width=1, border_color=COLOR_BORDER)
@@ -298,7 +303,6 @@ class TeamGeneratorApp(ctk.CTk):
         self.t1_empty = ctk.CTkFrame(self.t1_box, fg_color="transparent"); self.t1_empty.pack(expand=True)
         ctk.CTkLabel(self.t1_empty, text="👥", font=ctk.CTkFont(size=25), text_color=COLOR_TEXT_DIM).pack()
         ctk.CTkLabel(self.t1_empty, text="Teams will appear here", font=ctk.CTkFont(size=12, weight="bold"), text_color=COLOR_TEXT_DIM).pack()
-
         self.t2_empty = ctk.CTkFrame(self.t2_box, fg_color="transparent"); self.t2_empty.pack(expand=True)
         ctk.CTkLabel(self.t2_empty, text="👥", font=ctk.CTkFont(size=25), text_color=COLOR_TEXT_DIM).pack()
         ctk.CTkLabel(self.t2_empty, text="Teams will appear here", font=ctk.CTkFont(size=12, weight="bold"), text_color=COLOR_TEXT_DIM).pack()
@@ -310,7 +314,7 @@ class TeamGeneratorApp(ctk.CTk):
             s = ctk.CTkLabel(self.t1_res_frame, text="", font=ctk.CTkFont(size=15, weight="bold"), text_color=COLOR_TEXT_MAIN, height=24)
             s.pack(fill="x", pady=0); self.t1_slots.append(s)
         self.t1_total_label = ctk.CTkLabel(self.t1_res_frame, text="", font=ctk.CTkFont(size=18, weight="bold"), text_color=COLOR_TEAM1)
-        self.t1_total_label.pack(pady=(5, 0))
+        self.t1_total_label.pack(pady=(10, 0))
 
         self.t2_res_frame = ctk.CTkFrame(self.t2_box, fg_color="transparent")
         ctk.CTkLabel(self.t2_res_frame, text="TEAM 2", font=ctk.CTkFont(size=14, weight="bold"), text_color=COLOR_TEAM2).pack(pady=(10, 2))
@@ -319,25 +323,36 @@ class TeamGeneratorApp(ctk.CTk):
             s = ctk.CTkLabel(self.t2_res_frame, text="", font=ctk.CTkFont(size=15, weight="bold"), text_color=COLOR_TEXT_MAIN, height=24)
             s.pack(fill="x", pady=0); self.t2_slots.append(s)
         self.t2_total_label = ctk.CTkLabel(self.t2_res_frame, text="", font=ctk.CTkFont(size=18, weight="bold"), text_color=COLOR_TEAM2)
-        self.t2_total_label.pack(pady=(5, 0))
+        self.t2_total_label.pack(pady=(10, 0))
+
+    def clear_slot(self, idx):
+        self.player_vars[idx].set(PLACEHOLDER)
+        self.player_entries[idx].configure(text_color=COLOR_TEXT_MAIN)
+        self.dropdown_btns[idx].configure(text_color=COLOR_TEXT_MAIN)
 
     def on_type_search(self, idx):
         if self.is_updating: return
         val = self.player_vars[idx].get().strip(); match = None
         for k in self.player_db:
             if k.casefold() == val.casefold(): match = k; break
-        if match: self.player_entries[idx].configure(text_color="#2ecc71"); self.points_vars[idx].set(self.player_db[match])
-        else: self.player_entries[idx].configure(text_color=COLOR_TEXT_MAIN)
+        if match:
+            self.player_entries[idx].configure(text_color="#2ecc71")
+            self.dropdown_btns[idx].configure(text_color="#2ecc71") # Turn icon green
+            self.points_vars[idx].set(self.player_db[match])
+        else:
+            self.player_entries[idx].configure(text_color=COLOR_TEXT_MAIN)
+            self.dropdown_btns[idx].configure(text_color=COLOR_TEXT_MAIN)
         if val and val != PLACEHOLDER: self.sync_dropdown(idx, val, False)
 
     def handle_entry_click(self, ev, idx):
         if self.player_vars[idx].get() == PLACEHOLDER: self.player_vars[idx].set(""); self.player_entries[idx].configure(text_color=COLOR_TEXT_MAIN)
+        # Clicking right side of entry opens dropdown (if within 40px of right edge)
+        if ev.x > (self.player_entries[idx].winfo_width() - 40): self.sync_dropdown(idx, "", False)
 
-    def sync_dropdown(self, idx, term, take_focus):
+    def sync_dropdown(self, idx, term, force_close):
         sel = [v.get().strip() for i, v in enumerate(self.player_vars) if i != idx and v.get().strip() != PLACEHOLDER]
         if self.dropdown_window and self.dropdown_window.winfo_exists() and self.dropdown_window.slot_idx == idx:
-            if not term: # Toggle close if clicked again with no search term
-                self.dropdown_window.destroy(); return
+            if not term: self.dropdown_window.destroy(); return
             self.dropdown_window.refresh(term)
         else:
             if self.dropdown_window: self.dropdown_window.destroy()
@@ -348,6 +363,7 @@ class TeamGeneratorApp(ctk.CTk):
             messagebox.showwarning("Already Selected", f"Player '{n}' is already in the list.")
             return
         self.is_updating = True; self.player_vars[idx].set(n); self.player_entries[idx].configure(text_color="#2ecc71")
+        self.dropdown_btns[idx].configure(text_color="#2ecc71") # Turn icon green
         if n in self.player_db: self.points_vars[idx].set(self.player_db[n])
         self.is_updating = False
 
@@ -501,7 +517,7 @@ class TeamGeneratorApp(ctk.CTk):
         if rn and rn != "Select Roster...":
             d = read_json(os.path.join(SAVES_DIR, f"{rn}.json"))
             for i, p in enumerate(d.get("ps", [])):
-                if i < 10: self.player_vars[i].set(p["n"]); self.points_vars[i].set(p["p"]); self.player_entries[i].configure(text_color="#2ecc71" if p["n"] and p["n"]!=PLACEHOLDER else COLOR_TEXT_MAIN)
+                if i < 10: self.player_vars[i].set(p["n"]); self.points_vars[i].set(p["p"]); self.player_entries[i].configure(text_color="#2ecc71" if p["n"] and p["n"]!=PLACEHOLDER else COLOR_TEXT_MAIN); self.dropdown_btns[i].configure(text_color="#2ecc71" if p["n"] and p["n"]!=PLACEHOLDER else COLOR_TEXT_MAIN)
     def schedule_auto_update_check(self): threading.Thread(target=self._up_worker, daemon=True).start()
     def _up_worker(self):
         try:
