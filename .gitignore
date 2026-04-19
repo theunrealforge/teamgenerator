@@ -23,3 +23,7 @@ crash_log.txt
 # OS
 .DS_Store
 Thumbs.db
+@
+PROJECT_PROGRESS.md
+UPDATE_CONDITIONS.txt
+UI_INTEGRITY_GUIDE.md
