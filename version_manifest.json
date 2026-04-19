@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.0.0",
   "url": "https://github.com/theunrealforge/teamgenerator/releases/latest/download/TeamGenerator.exe",
-  "notes": "Version 1.1.0: Clean UI with 40x40 logo in corner and no header text."
+  "notes": "Version 1.0.0: Initial release with a professional UI overhaul, deep dark theme, and protected player features."
 }
