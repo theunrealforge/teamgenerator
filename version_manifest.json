@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
-  "url": "https://github.com/theunrealforge/teamgenerator/releases/latest/download/TeamGenerator.exe",
-  "notes": "Version 1.0.2: Window is now resizable from all 4 edges and 4 corners (no more lag/glitch on drag). Discord output is now a clean PIL-rendered PNG instead of a screen-grab, so the image is never cropped no matter how small the window is."
+  "version": "1.1.0",
+  "url": "https://github.com/k-drebin/teamgenerator/releases/latest/download/TeamGenerator.exe",
+  "notes": "Version 1.1.0 — Captain Mode. Pick captains and draft a 5-player roster per side from the player database (max 4 picks per team), with team name auto-fill, per-team color picker, total points readout once a side is full, and a Discord post that captures only the two team columns. Adds in-app update install with progress + auto-relaunch (future updates from 1.1.0 onward will install with one click). Window controls now match the tab pills along the header bar."
 }
